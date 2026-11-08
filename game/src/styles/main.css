@@ -1,0 +1,146 @@
+/* Стиль «бумаги мастера» — см. docs/19_art_direction.md */
+:root {
+  --desk: #1d2127; --desk-2: #262b33; --desk-line: #323843;
+  --paper: #e6eaec; --paper-2: #d9dfe2; --paper-edge: #c3cbd0;
+  --graphite: #2a2d33; --graphite-soft: #5b616b;
+  --ink: #1e3c8c; --ink-soft: #4a63a8; --ink-dark: #152a63;
+  --stamp: #a3294a; --stamp-dark: #6e1a31;
+  --sticker: #f1d04b; --sticker-edge: #d9b52e;
+  --ok: #2f7d4f; --cork: #b48a5a;
+  --thermal: #f7f7f2; --thermal-ink: #55575c;
+  --chalk: #eef1f3; --chalk-dim: #a9b0ba;
+  --f-main: "Nunito", "Trebuchet MS", system-ui, sans-serif;
+  --f-hand: "Neucha", "Nunito", cursive;
+  --f-mono: "PT Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--desk); color: var(--chalk); font-family: var(--f-main); font-size: 16px; line-height: 1.45; overflow: hidden; -webkit-font-smoothing: antialiased; }
+#app { height: 100%; }
+button { font-family: inherit; }
+:focus-visible { outline: 3px solid var(--sticker); outline-offset: 2px; }
+
+.app { position: fixed; inset: 0; overflow: hidden; }
+.desk-bg { position: absolute; inset: 0; background: radial-gradient(1200px 700px at 70% -10%, #2b313a 0%, transparent 60%), repeating-linear-gradient(90deg, rgba(255,255,255,.012) 0 2px, transparent 2px 7px), var(--desk); }
+canvas.scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: default; touch-action: none; transition: filter .6s ease, transform .6s ease; }
+canvas.scene.interactive { cursor: grab; }
+canvas.scene.drag { cursor: grabbing; }
+canvas.scene.hover { cursor: pointer; }
+canvas.scene.dim { filter: blur(3px) brightness(.55) saturate(.8); transform: scale(1.02); }
+.vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(10,8,6,.55) 100%); }
+.grain { position: absolute; inset: 0; pointer-events: none; opacity: .06; mix-blend-mode: overlay; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
+.layer { position: absolute; inset: 0; pointer-events: none; }
+.layer > * { pointer-events: auto; }
+
+/* ---------- кнопки ---------- */
+.btn { font: 800 15px var(--f-main); border: 0; border-radius: 12px; padding: 11px 18px; cursor: pointer; background: var(--ink); color: #fff; box-shadow: 0 4px 0 var(--ink-dark); transition: transform .08s, box-shadow .08s, opacity .2s; display: inline-flex; align-items: center; gap: 8px; }
+.btn:active:not([disabled]) { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink-dark); }
+.btn[disabled] { opacity: .4; cursor: not-allowed; }
+.btn.ghost { background: transparent; color: var(--graphite); box-shadow: inset 0 0 0 2px var(--paper-edge); }
+.btn.ghost.light { color: var(--chalk); box-shadow: inset 0 0 0 2px var(--desk-line); }
+.btn.ghost:active { transform: none; }
+.btn.stamp { background: var(--stamp); box-shadow: 0 4px 0 var(--stamp-dark); }
+.btn.ok { background: var(--ok); box-shadow: 0 4px 0 #1d5233; }
+.btn.yellow { background: var(--sticker); color: #3a2f06; box-shadow: 0 4px 0 var(--sticker-edge); }
+.btn.big { font-size: 18px; padding: 14px 24px; border-radius: 14px; }
+.btn svg { width: 18px; height: 18px; }
+.kbd { font: 700 11px var(--f-mono); padding: 1px 6px; border-radius: 5px; background: rgba(0,0,0,.18); }
+
+/* ---------- чипы HUD ---------- */
+.chip { display: inline-flex; align-items: center; gap: 8px; background: rgba(230,234,236,.95); color: var(--graphite); border-radius: 12px; padding: 7px 12px; font-weight: 700; font-size: 14px; box-shadow: 0 6px 18px rgba(0,0,0,.25); white-space: nowrap; }
+.chip b { font-family: var(--f-mono); font-weight: 400; font-size: 15px; }
+.chip svg { width: 18px; height: 18px; flex: none; }
+.chip.dark { background: var(--graphite); color: var(--chalk); }
+.chip.dark b { color: var(--sticker); }
+.chip.danger { background: var(--stamp); color: #fff; }
+.chip.danger b { color: #fff; }
+.chip .neg { color: var(--stamp); }
+.hud { position: absolute; left: 0; right: 0; top: 0; padding: 14px 16px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; pointer-events: none; }
+.hud > div { display: flex; gap: 8px; flex-wrap: wrap; pointer-events: auto; align-items: center; }
+.icon-btn { width: 40px; height: 40px; border-radius: 12px; border: 0; background: rgba(230,234,236,.95); color: var(--graphite); display: grid; place-items: center; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+.icon-btn svg { width: 20px; height: 20px; }
+
+/* ---------- бумага ---------- */
+.paper { background: var(--paper); color: var(--graphite); border-radius: 6px; box-shadow: 0 2px 0 var(--paper-edge), 0 22px 40px rgba(0,0,0,.4); position: relative; }
+.lbl { font-size: 13px; font-weight: 700; color: var(--graphite-soft); }
+.hand { font-family: var(--f-hand); }
+.mono { font-family: var(--f-mono); }
+h1, h2, h3 { text-wrap: balance; }
+
+/* листок блокнота */
+.note { position: absolute; top: 50%; left: 50%; width: min(400px, 88vw); transform: translate(-50%, -50%) rotate(-1.2deg); background-color: var(--paper); background-image: repeating-linear-gradient(180deg, transparent 0 29px, rgba(30,60,140,.16) 29px 30px); color: var(--graphite); border-radius: 6px; padding: 28px 26px 20px 38px; box-shadow: 0 24px 50px rgba(0,0,0,.5); animation: noteIn .22s cubic-bezier(.2,.9,.3,1.2); }
+.note::before { content: ""; position: absolute; left: 22px; top: 0; bottom: 0; width: 1px; background: rgba(163,41,74,.45); }
+.note::after { content: ""; position: absolute; top: -10px; left: 50%; width: 84px; height: 22px; transform: translateX(-50%) rotate(2deg); background: rgba(241,208,75,.82); border-radius: 2px; }
+.note h3 { margin: 0 0 4px; font-weight: 800; font-size: 20px; }
+.note .fact { font-family: var(--f-hand); font-size: 24px; line-height: 30px; color: var(--ink); margin: 6px 0 10px; }
+.note .meta { font-size: 13px; color: var(--graphite-soft); display: flex; align-items: center; gap: 6px; }
+@keyframes noteIn { from { transform: translate(-50%, -46%) rotate(-4deg); opacity: 0; } }
+
+/* стикер */
+.sticky { background: var(--sticker); color: #3a2f06; font-family: var(--f-hand); font-size: 18px; line-height: 1.25; padding: 10px 12px; box-shadow: 0 6px 12px rgba(0,0,0,.25); transform: rotate(-1.5deg); }
+.sticky.warn { background: #f3b0bd; color: #4c0f20; }
+
+/* штамп */
+.stamp-mark { display: inline-block; font: 900 13px var(--f-main); color: var(--stamp); border: 2px solid var(--stamp); border-radius: 6px; padding: 1px 6px; transform: rotate(8deg); opacity: .88; letter-spacing: .04em; }
+.big-stamp { position: absolute; font: 900 34px var(--f-main); letter-spacing: .06em; color: var(--stamp); border: 5px solid var(--stamp); border-radius: 12px; padding: 6px 16px; transform: rotate(-12deg); opacity: .86; mix-blend-mode: multiply; animation: stamp .42s cubic-bezier(.2,.9,.3,1.3) both; pointer-events: none; white-space: nowrap; }
+.big-stamp.ok { color: var(--ok); border-color: var(--ok); }
+@keyframes stamp { 0% { transform: rotate(-12deg) scale(2.4); opacity: 0; } 60% { opacity: .95; } 100% { transform: rotate(-12deg) scale(1); opacity: .86; } }
+.shake { animation: shake .3s .25s; }
+@keyframes shake { 25% { transform: translate(2px,1px); } 50% { transform: translate(-2px,-1px); } 75% { transform: translate(1px,-1px); } }
+
+/* тост */
+.toast { position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 50; }
+
+/* модалка */
+.modal-bg { position: absolute; inset: 0; background: rgba(8,10,12,.55); display: grid; place-items: center; z-index: 40; animation: fade .2s; padding: 16px; }
+@keyframes fade { from { opacity: 0; } }
+.modal { width: min(460px, 100%); padding: 26px 26px 22px; }
+.modal h3 { margin: 0 0 8px; font-weight: 900; font-size: 22px; }
+.modal p { margin: 0 0 14px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.spread { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+
+/* боковая панель в заказе */
+.side { position: absolute; right: 18px; bottom: 18px; width: min(520px, calc(100vw - 36px)); max-height: calc(100vh - 92px); overflow: auto; padding: 22px; animation: slideIn .35s cubic-bezier(.2,.9,.3,1); }
+@keyframes slideIn { from { transform: translateX(40px); opacity: 0; } }
+.side.left { right: auto; left: 18px; }
+.hint-line { position: absolute; left: 20px; bottom: 20px; font-family: var(--f-hand); font-size: 21px; color: var(--chalk); text-shadow: 0 2px 8px rgba(0,0,0,.7); max-width: 60vw; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* ================= Адаптив ================= */
+html, body { height: 100dvh; overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
+button, .order, a { touch-action: manipulation; }
+@media (hover: none) { .kbd { display: none; } }
+.hud { padding-top: max(14px, env(safe-area-inset-top)); padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+
+@media (max-width: 720px) {
+  .hud { padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) 8px max(8px, env(safe-area-inset-left)); gap: 6px; }
+  .hud > div { gap: 5px; }
+  .chip { font-size: 12px; padding: 5px 8px; gap: 5px; border-radius: 10px; }
+  .chip b { font-size: 13px; }
+  .chip svg { width: 15px; height: 15px; }
+  .icon-btn { width: 34px; height: 34px; border-radius: 10px; }
+  .icon-btn svg { width: 17px; height: 17px; }
+  .side { left: 8px !important; right: 8px; bottom: max(8px, env(safe-area-inset-bottom)); width: auto !important; max-height: 64dvh; padding: 16px; border-radius: 14px; animation: slideUp .3s cubic-bezier(.2,.9,.3,1); }
+  .side.left { left: 8px; }
+  .hint-line { font-size: 17px; left: 12px; max-width: 80vw; }
+  .note { width: 92vw; padding: 24px 18px 16px 30px; }
+  .note .fact { font-size: 21px; line-height: 27px; }
+  .btn { padding: 10px 14px; font-size: 14px; }
+  .btn.big { font-size: 16px; padding: 12px 18px; }
+  .big-stamp { font-size: 24px; border-width: 4px; }
+  .modal { padding: 20px 18px 18px; }
+  .modal h3 { font-size: 19px; }
+}
+@keyframes slideUp { from { transform: translateY(30px); opacity: 0; } }
+
+/* телефон в горизонтальной ориентации: панели справа, сцена видна слева */
+@media (max-height: 520px) and (orientation: landscape) {
+  .hud { padding: 6px max(10px, env(safe-area-inset-right)) 6px max(10px, env(safe-area-inset-left)); }
+  .chip { font-size: 12px; padding: 4px 8px; }
+  .icon-btn { width: 32px; height: 32px; }
+  .side { left: auto !important; right: max(8px, env(safe-area-inset-right)); top: 48px; bottom: 8px; width: min(460px, 56vw) !important; max-height: none; padding: 14px; animation: slideIn .3s; }
+  .hint-line { font-size: 16px; bottom: 12px; max-width: 40vw; }
+  .note { width: min(420px, 70vw); max-height: 88dvh; overflow: auto; }
+}
