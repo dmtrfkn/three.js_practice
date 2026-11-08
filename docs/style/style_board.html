@@ -1,0 +1,1112 @@
+<title>Мастер на день — стиль</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Neucha&family=PT+Mono&display=swap">
+<style>
+/* Layout: workbench page — the 3D diorama on top, then the master's papers laid out on the desk. Single deliberate theme (dark desk). */
+:root{
+  color-scheme: dark;
+  --desk:#1d2127; --desk-2:#262b33; --desk-line:#323843;
+  --paper:#e6eaec; --paper-2:#d9dfe2; --paper-edge:#c3cbd0;
+  --graphite:#2a2d33; --graphite-soft:#5b616b;
+  --ink:#1e3c8c; --ink-soft:#4a63a8;
+  --stamp:#a3294a; --sticker:#f1d04b; --sticker-edge:#d9b52e;
+  --ok:#2f7d4f; --cork:#b48a5a; --cork-dark:#8f6a40;
+  --thermal:#f7f7f2; --thermal-ink:#55575c;
+  --chalk:#eef1f3; --chalk-dim:#a9b0ba;
+  --f-main:"Nunito", "Trebuchet MS", system-ui, sans-serif;
+  --f-hand:"Neucha", "Comic Sans MS", "Nunito", cursive;
+  --f-mono:"PT Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+*{box-sizing:border-box}
+html,body{background:var(--desk);color:var(--chalk)}
+body{
+  font-family:var(--f-main);font-size:16px;line-height:1.45;margin:0;
+  background:
+    radial-gradient(1200px 600px at 70% -10%, #2b313a 0%, transparent 60%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.012) 0 2px, transparent 2px 7px),
+    var(--desk);
+}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:28px 64px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px 32px;margin-bottom:18px}
+.logo{display:flex;align-items:center;gap:14px}
+.logo-mark{width:52px;height:52px;border-radius:14px;background:var(--sticker);color:var(--graphite);display:grid;place-items:center;transform:rotate(-4deg);box-shadow:0 6px 0 var(--sticker-edge), 0 14px 24px rgba(0,0,0,.35)}
+.logo-mark svg{width:30px;height:30px}
+h1{font-weight:900;font-size:clamp(30px,4.4vw,46px);line-height:1;margin:0;letter-spacing:-.01em;text-wrap:balance}
+h1 small{display:block;font-family:var(--f-hand);font-weight:400;font-size:20px;color:var(--sticker);letter-spacing:0;margin-top:6px;transform:rotate(-1deg);transform-origin:left}
+.top p{max-width:520px;margin:0;color:var(--chalk-dim)}
+
+/* ---------- Scene ---------- */
+.scene-frame{position:relative;border-radius:22px;overflow:hidden;background:#0e1013;box-shadow:0 30px 60px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.05)}
+.scene-frame canvas{display:block;width:100%;height:auto;aspect-ratio:16/9;max-height:76vh;cursor:grab;touch-action:none}
+.scene-frame canvas.drag{cursor:grabbing}
+.scene-frame canvas.hover{cursor:pointer}
+.vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(10,8,6,.55) 100%);mix-blend-mode:multiply}
+.vignette::after{content:"";position:absolute;inset:0;opacity:.07;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");mix-blend-mode:overlay}
+.hud{position:absolute;inset:0;pointer-events:none;padding:16px}
+.hud-row{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.chip{pointer-events:auto;display:inline-flex;align-items:center;gap:8px;background:rgba(230,234,236,.94);color:var(--graphite);border-radius:12px;padding:8px 12px;font-weight:700;font-size:14px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.chip b{font-family:var(--f-mono);font-weight:400;font-size:15px}
+.chip svg{width:18px;height:18px;flex:none}
+.chip.timer{background:var(--graphite);color:var(--chalk)}
+.chip.timer b{color:var(--sticker);font-size:18px}
+.hud-bottom{position:absolute;left:16px;right:16px;bottom:16px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.hint{font-family:var(--f-hand);font-size:19px;color:var(--chalk);text-shadow:0 2px 8px rgba(0,0,0,.6)}
+.loc-switch{pointer-events:auto;display:flex;flex-wrap:wrap;gap:6px;background:rgba(14,16,19,.72);padding:6px;border-radius:14px;backdrop-filter:blur(6px)}
+.loc-switch button{font:700 13px var(--f-main);color:var(--chalk-dim);background:transparent;border:0;border-radius:9px;padding:7px 11px;cursor:pointer}
+.loc-switch button[aria-pressed="true"]{background:var(--paper);color:var(--graphite)}
+.loc-switch button:focus-visible{outline:2px solid var(--sticker);outline-offset:2px}
+
+/* item card over scene */
+.note{position:absolute;top:50%;left:50%;width:min(360px,86%);transform:translate(-50%,-50%) rotate(-1.2deg);pointer-events:auto;
+  background:
+    linear-gradient(var(--paper),var(--paper)) padding-box,
+    var(--paper);
+  background-image:repeating-linear-gradient(180deg, transparent 0 29px, rgba(30,60,140,.16) 29px 30px);
+  background-color:var(--paper);
+  color:var(--graphite);border-radius:6px;padding:26px 24px 18px 34px;box-shadow:0 24px 50px rgba(0,0,0,.5)}
+.note::before{content:"";position:absolute;left:20px;top:0;bottom:0;width:1px;background:rgba(163,41,74,.45)}
+.note::after{content:"";position:absolute;top:-10px;left:50%;width:84px;height:22px;transform:translateX(-50%) rotate(2deg);background:rgba(241,208,75,.82);border-radius:2px}
+.note h3{margin:0 0 4px;font-weight:800;font-size:19px}
+.note .fact{font-family:var(--f-hand);font-size:23px;line-height:30px;color:var(--ink);margin:6px 0 10px}
+.note .meta{font-size:13px;color:var(--graphite-soft);display:flex;align-items:center;gap:6px}
+.note .meta svg{width:16px;height:16px}
+.note button{margin-top:12px}
+
+/* ---------- buttons ---------- */
+.btn{font:800 15px var(--f-main);border:0;border-radius:12px;padding:11px 18px;cursor:pointer;background:var(--ink);color:#fff;box-shadow:0 4px 0 #152a63;transition:transform .08s, box-shadow .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #152a63}
+.btn:focus-visible{outline:3px solid var(--sticker);outline-offset:2px}
+.btn.ghost{background:transparent;color:var(--graphite);box-shadow:inset 0 0 0 2px var(--paper-edge)}
+.btn.ghost:active{transform:none}
+.btn.stamp{background:var(--stamp);box-shadow:0 4px 0 #6e1a31}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+
+/* ---------- sections ---------- */
+section{margin-top:56px}
+.sec-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;margin-bottom:18px}
+.sec-head h2{margin:0;font-weight:900;font-size:clamp(24px,3vw,32px);text-wrap:balance}
+.sec-head p{margin:0;color:var(--chalk-dim);max-width:640px}
+.hand{font-family:var(--f-hand)}
+
+/* palette script */
+.script{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.loc{border-radius:16px;overflow:hidden;background:var(--desk-2);box-shadow:inset 0 0 0 1px var(--desk-line)}
+.loc .sw{height:118px;position:relative}
+.loc .sw i{position:absolute;inset:auto 0 0 0;height:38%}
+.loc .sw .lamp{position:absolute;top:12px;right:12px;width:26px;height:26px;border-radius:50%;box-shadow:0 0 22px 8px currentColor;background:currentColor;opacity:.9}
+.loc .tx{padding:12px 14px 14px}
+.loc h4{margin:0;font-weight:800;font-size:16px}
+.loc p{margin:4px 0 0;font-size:13px;color:var(--chalk-dim);line-height:1.4}
+.loc .k{font-family:var(--f-mono);font-size:12px;color:var(--chalk-dim);margin-top:8px}
+
+/* board */
+.cork{border-radius:22px;padding:30px 26px 34px;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(0,0,0,.12) 0 1.2px, transparent 1.6px) 0 0/9px 11px,
+    radial-gradient(circle at 70% 60%, rgba(255,255,255,.08) 0 1px, transparent 1.4px) 0 0/13px 7px,
+    radial-gradient(circle at 40% 80%, rgba(0,0,0,.10) 0 1.5px, transparent 2px) 0 0/17px 15px,
+    linear-gradient(160deg, #be9563, var(--cork) 45%, #a77d4e);
+  box-shadow: inset 0 0 0 10px #5a4127, inset 0 0 0 12px #3e2c1a, inset 0 10px 30px rgba(0,0,0,.35), 0 26px 50px rgba(0,0,0,.4)}
+.board-top{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;margin-bottom:22px;color:#2b1d0f}
+.board-top .hand{font-size:24px}
+.stats{display:flex;flex-wrap:wrap;gap:8px}
+.cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px}
+.order{position:relative;background:var(--paper);color:var(--graphite);border-radius:4px 4px 10px 4px;padding:22px 14px 14px;box-shadow:0 2px 0 var(--paper-edge), 0 14px 22px rgba(40,24,8,.35);transition:transform .18s ease, box-shadow .18s ease;cursor:pointer;min-width:0}
+.order:nth-child(1){transform:rotate(-2deg)} .order:nth-child(2){transform:rotate(1.4deg) translateY(8px)} .order:nth-child(3){transform:rotate(-.6deg)} .order:nth-child(4){transform:rotate(2.2deg) translateY(4px)} .order:nth-child(5){transform:rotate(-1.6deg) translateY(10px)}
+.order:hover,.order:focus-visible{transform:rotate(0) translateY(-8px);box-shadow:0 2px 0 var(--paper-edge), 0 24px 30px rgba(40,24,8,.45);outline:none}
+.order .pin{position:absolute;top:-7px;left:50%;width:18px;height:18px;margin-left:-9px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #f07a8f, var(--stamp) 60%, #5c1328);box-shadow:0 4px 4px rgba(0,0,0,.35)}
+.order .no{font-family:var(--f-mono);font-size:11px;color:var(--graphite-soft)}
+.order h5{margin:2px 0 0;font-size:17px;font-weight:800;line-height:1.15}
+.order .who{font-size:13px;color:var(--graphite-soft);margin-top:2px}
+.order .ico{height:62px;display:grid;place-items:center;margin:10px 0 6px;background:var(--paper-2);border-radius:8px}
+.order .ico svg{height:46px;width:auto}
+.order .sym{font-size:13.5px;line-height:1.35;min-height:54px}
+.order .tier{position:absolute;top:14px;right:10px;font:900 13px var(--f-main);color:var(--stamp);border:2px solid var(--stamp);border-radius:6px;padding:1px 6px;transform:rotate(8deg);opacity:.85;letter-spacing:.04em}
+.order .urg{margin-top:8px;font-family:var(--f-hand);color:var(--ink);font-size:17px;line-height:1.15}
+.order .omen{margin:10px -6px -4px auto;width:fit-content;max-width:100%;background:var(--sticker);color:#3a2f06;font-family:var(--f-hand);font-size:16px;line-height:1.2;padding:7px 9px;transform:rotate(-2.5deg);box-shadow:0 5px 8px rgba(0,0,0,.2)}
+.order .omen.warn{background:#f3b0bd;color:#4c0f20}
+
+/* desk grid of papers */
+.desk{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:22px;align-items:start}
+.paper{background:var(--paper);color:var(--graphite);border-radius:6px;box-shadow:0 2px 0 var(--paper-edge), 0 22px 40px rgba(0,0,0,.38);position:relative;min-width:0}
+.paper .lbl{font-size:13px;font-weight:700;color:var(--graphite-soft)}
+.dialog{grid-column:span 7;padding:22px;display:grid;grid-template-columns:150px minmax(0,1fr);gap:20px}
+.portrait{border-radius:14px;overflow:hidden;background:linear-gradient(#5e8c6a 0 58%, #e8e6dd 58%);aspect-ratio:3/4;position:relative}
+.portrait canvas{width:100%;height:100%;display:block}
+.moods{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.moods button{font:700 12px var(--f-main);border:0;border-radius:8px;padding:6px 8px;background:var(--paper-2);color:var(--graphite);cursor:pointer}
+.moods button[aria-pressed="true"]{background:var(--graphite);color:var(--paper)}
+.log{display:flex;flex-direction:column;gap:12px}
+.q{align-self:flex-start;max-width:92%;background:var(--paper-2);border-radius:12px 12px 12px 4px;padding:10px 12px;font-weight:700;font-size:15px}
+.a{position:relative;padding:4px 0 4px 16px;border-left:3px solid var(--ink-soft);font-size:16px}
+.a .tone{display:block;font-family:var(--f-hand);color:var(--ink);font-size:18px;margin-bottom:2px}
+.qs{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.qs button{text-align:left;font:600 15px var(--f-main);color:var(--graphite);background:transparent;border:2px dashed var(--paper-edge);border-radius:12px;padding:10px 12px;cursor:pointer;display:flex;gap:10px;align-items:center}
+.qs button:hover{border-color:var(--ink-soft);background:rgba(30,60,140,.05)}
+.qs button:focus-visible{outline:3px solid var(--sticker)}
+.qs button[disabled]{opacity:.35;cursor:default}
+.qs button svg{width:18px;height:18px;flex:none;color:var(--ink)}
+.left-q{font-family:var(--f-hand);font-size:19px;color:var(--stamp)}
+
+.price{grid-column:span 5;padding:22px}
+.price .row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.price .market{font-family:var(--f-mono);font-size:15px}
+.big{font-weight:900;font-size:44px;line-height:1;font-variant-numeric:tabular-nums;color:var(--ink)}
+.mult{font-family:var(--f-hand);font-size:24px;color:var(--ink)}
+.tape{position:relative;margin:22px 0 8px;height:74px;border-radius:10px;background:linear-gradient(#f5d64f,#e9c437);box-shadow:inset 0 -6px 0 rgba(0,0,0,.08), 0 6px 0 #b8961f;overflow:hidden}
+.tape .ticks{position:absolute;inset:0 0 auto 0;height:34px;
+  background:
+    repeating-linear-gradient(90deg, #2a2d33 0 2px, transparent 2px 100%) 0 0/calc(100%/25) 26px no-repeat,
+    repeating-linear-gradient(90deg, #2a2d33 0 1px, transparent 1px 100%) 0 0/calc(100%/50) 14px no-repeat;
+  background-repeat:repeat-x}
+.tape .nums{position:absolute;left:0;right:0;top:30px;display:flex;justify-content:space-between;padding:0 2px;font:700 11px var(--f-mono);color:#2a2d33}
+.tape .market-mark{position:absolute;top:0;bottom:0;width:3px;background:var(--ink)}
+.tape .market-mark span{position:absolute;bottom:4px;left:6px;white-space:nowrap;font-family:var(--f-hand);font-size:16px;color:var(--ink)}
+.tape input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize}
+.tape .cursor{position:absolute;top:-2px;bottom:-2px;width:0;pointer-events:none}
+.tape .cursor::before{content:"";position:absolute;left:-2px;top:0;bottom:0;width:4px;background:var(--stamp)}
+.tape .cursor::after{content:"";position:absolute;left:-10px;top:-2px;border:10px solid transparent;border-top-color:var(--stamp)}
+.tape-wrap:focus-within .tape{outline:3px solid var(--sticker);outline-offset:3px}
+.price .say{min-height:52px;margin-top:12px;display:flex;gap:10px;align-items:center;font-size:15px}
+.price .say .bubble{background:var(--paper-2);border-radius:12px;padding:9px 12px}
+.price .say .tone{font-family:var(--f-hand);color:var(--ink);font-size:17px;margin-right:6px}
+
+.receipt-col{grid-column:span 4;align-self:start;display:flex;flex-direction:column;gap:12px;align-items:center}
+.printer{width:100%;max-width:300px;height:30px;border-radius:12px 12px 4px 4px;background:linear-gradient(#3b4049,#2a2e35);box-shadow:inset 0 -6px 0 #1b1e23, 0 8px 18px rgba(0,0,0,.35);position:relative}
+.printer::after{content:"";position:absolute;left:24px;right:24px;bottom:4px;height:5px;border-radius:3px;background:#101215}
+.receipt{width:86%;max-width:258px;margin-top:-16px;background:var(--thermal);color:var(--thermal-ink);font-family:var(--f-mono);font-size:13px;line-height:1.5;padding:0 16px;overflow:hidden;max-height:0;transition:max-height 1.9s steps(24,end), padding .2s;
+  -webkit-mask:linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat, radial-gradient(circle 5px at 7px 100%, transparent 98%, #000) bottom/14px 8px repeat-x;
+  mask:linear-gradient(#000 0 0) top/100% calc(100% - 8px) no-repeat, radial-gradient(circle 5px at 7px 100%, transparent 98%, #000) bottom/14px 8px repeat-x;
+  box-shadow:0 14px 24px rgba(0,0,0,.3)}
+.receipt.on{max-height:520px;padding:22px 16px 26px}
+.receipt .c{text-align:center}
+.receipt hr{border:0;border-top:1px dashed #9a9ca1;margin:8px 0}
+.receipt .l{display:flex;justify-content:space-between;gap:10px}
+.receipt .tot{font-size:16px;color:#222}
+.receipt .bar{height:34px;margin-top:10px;background:repeating-linear-gradient(90deg,#333 0 2px,transparent 2px 3px,#333 3px 4px,transparent 4px 7px,#333 7px 10px,transparent 10px 11px)}
+
+.protocol{grid-column:span 7;padding:26px 28px 28px;overflow:hidden;
+  background-image:linear-gradient(90deg, transparent 0 calc(100% - 1px), rgba(42,45,51,.08) 0) , linear-gradient(var(--paper),var(--paper));
+}
+.protocol .gerb{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;border-bottom:2px solid var(--graphite);padding-bottom:10px;margin-bottom:14px}
+.protocol h3{margin:0;font-weight:900;font-size:21px;letter-spacing:.01em}
+.protocol .num{font-family:var(--f-mono);font-size:13px;color:var(--graphite-soft)}
+.ptable{width:100%;border-collapse:collapse;font-size:15px}
+.ptable td{padding:7px 0;border-bottom:1px dotted #aab2b8;vertical-align:baseline}
+.ptable td:last-child{text-align:right;font-family:var(--f-mono);white-space:nowrap}
+.ptable tr.sum td{font-weight:800;border-bottom:0;padding-top:12px}
+.ptable tr.sum td:last-child{color:var(--stamp);font-size:18px}
+.sig{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;margin-top:18px;flex-wrap:wrap}
+.sig .line{flex:1;min-width:160px;border-bottom:1px solid var(--graphite);font-family:var(--f-hand);font-size:24px;color:var(--ink);padding:0 6px 2px}
+.big-stamp{position:absolute;left:34%;top:150px;font:900 34px var(--f-main);letter-spacing:.06em;color:var(--stamp);border:5px solid var(--stamp);border-radius:12px;padding:6px 16px;transform:rotate(-12deg) scale(1);opacity:.86;mix-blend-mode:multiply;
+}
+.big-stamp.hit{animation:stamp .42s cubic-bezier(.2,.9,.3,1.3)}
+@keyframes stamp{0%{transform:rotate(-12deg) scale(2.4);opacity:0}60%{opacity:.95}100%{transform:rotate(-12deg) scale(1);opacity:.86}}
+.paper.shake{animation:shake .3s .25s}
+@keyframes shake{25%{transform:translate(2px,1px)}50%{transform:translate(-2px,-1px)}75%{transform:translate(1px,-1px)}}
+
+.mini{grid-column:span 5;padding:20px}
+.mini canvas{width:100%;height:auto;aspect-ratio:16/10;display:block;border-radius:12px;background:#2f343c}
+.mini .row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+.hits{display:flex;gap:6px}
+.hits i{width:22px;height:22px;border-radius:50%;box-shadow:inset 0 0 0 2px var(--paper-edge);display:grid;place-items:center;font-style:normal;font-weight:900;font-size:13px}
+.hits i.ok{background:var(--ok);box-shadow:none;color:#fff}
+.hits i.bad{background:var(--stamp);box-shadow:none;color:#fff}
+
+.type{grid-column:span 5;padding:24px 26px}
+.type .spec{display:grid;grid-template-columns:110px minmax(0,1fr);gap:10px 18px;align-items:baseline}
+.type .spec span{font-family:var(--f-mono);font-size:12px;color:var(--graphite-soft)}
+.t900{font-weight:900;font-size:32px;line-height:1.05;text-wrap:balance}
+.t800{font-weight:800;font-size:28px;line-height:1.1}
+.t600{font-weight:600;font-size:20px}
+.t400{font-weight:400;font-size:16px}
+.thand{font-family:var(--f-hand);font-size:24px;color:var(--ink)}
+.tmono{font-family:var(--f-mono);font-size:15px}
+.swatches{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.swatches div{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700}
+.swatches i{width:30px;height:30px;border-radius:9px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+
+.rules{grid-column:span 3;padding:24px 26px;background:var(--sticker);color:#3a2f06;transform:rotate(1deg);border-radius:4px;box-shadow:0 22px 34px rgba(0,0,0,.4)}
+.rules h3{margin:0 0 8px;font-weight:900}
+.rules ul{margin:0;padding-left:20px;font-family:var(--f-hand);font-size:20px;line-height:1.35}
+.rules li::marker{content:"✕  ";color:var(--stamp);font-family:var(--f-main);font-weight:900}
+
+footer{margin-top:56px;color:var(--chalk-dim);font-size:14px}
+
+@media (max-width: 1000px){
+  .cards{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .script{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .dialog,.price,.receipt-col,.protocol,.mini,.type,.rules{grid-column:1/-1}
+}
+@media (max-width: 620px){
+  .cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .script{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dialog{grid-template-columns:1fr}
+  .portrait{max-width:170px}
+  .big-stamp{font-size:24px;right:16px;top:auto;bottom:90px}
+  .type .spec{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="logo">
+      <div class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 4.5a6 6 0 0 0-6.8 8.1L4.8 21.5a2.4 2.4 0 0 0 3.4 3.4l8.9-8.9a6 6 0 0 0 8.1-6.8l-3.6 3.6-3.4-.9-.9-3.4z"/></svg>
+      </div>
+      <h1>Мастер на день<small>визуальный стиль · на утверждение</small></h1>
+    </div>
+    <p>Квартира как диорама и бумаги мастера. Покрутите камеру мышью, нажмите на предметы, переключите свет локаций. Ниже экраны интерфейса, они тоже нажимаются.</p>
+  </header>
+
+  <div class="scene-frame">
+    <canvas id="scene" aria-label="3D-сцена: кухня общежития"></canvas>
+    <div class="vignette" aria-hidden="true"></div>
+    <div class="hud">
+      <div class="hud-row">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg><b>7 600 ₽</b></span>
+          <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.5 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg><b>+4</b></span>
+          <span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16M6 20V9l6-5 6 5v11"/><path d="M10 20v-5h4v5"/></svg>Общежитие · вызов 2 из 3</span>
+        </div>
+        <span class="chip timer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M9 2h6"/></svg>осмотр <b id="timer">0:30</b></span>
+      </div>
+      <div class="hud-bottom">
+        <span class="hint" id="hint">тяните мышью — оглядеться · нажмите на предмет</span>
+        <div class="loc-switch" role="group" aria-label="Свет локации">
+          <button type="button" data-loc="0" aria-pressed="true">Общежитие</button>
+          <button type="button" data-loc="1" aria-pressed="false">Хрущёвка</button>
+          <button type="button" data-loc="2" aria-pressed="false">Новостройка</button>
+          <button type="button" data-loc="3" aria-pressed="false">Элитный ЖК</button>
+          <button type="button" data-loc="4" aria-pressed="false">Офис</button>
+        </div>
+      </div>
+      <div class="note" id="note" hidden>
+        <h3 id="noteTitle">Дорогой ноутбук</h3>
+        <div class="fact" id="noteFact">Тонкий алюминиевый ноутбук последней модели</div>
+        <div class="meta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>в разговоре появится вопрос об этом</div>
+        <button class="btn" type="button" id="noteClose">Закрыть · Esc</button>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <div class="sec-head"><h2>Цветовой сценарий</h2><p>Одна температура света и один акцент на локацию. Социальный рост героя виден без текста.</p></div>
+    <div class="script" id="script"></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Доска заявок</h2><p>Экран выбора заказа: пять заявок на пробковой доске, штамп ценовой группы, жёлтый стикер-примета.</p></div>
+    <div class="cork">
+      <div class="board-top">
+        <span class="hand">Заявки · общежитие на Лесной, 14</span>
+        <div class="stats">
+          <span class="chip"><b>7 600 ₽</b> из 8 000</span>
+          <span class="chip">вызовов: <b>2</b></span>
+          <span class="chip">нарушений: <b>0</b></span>
+        </div>
+      </div>
+      <div class="cards" id="cards"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>Бумаги мастера</h2><p>Разговор, цена, ремонт, чек и протокол. Всё живое: задайте вопросы, двигайте рулетку, распечатайте чек.</p></div>
+    <div class="desk">
+      <div class="paper dialog">
+        <div>
+          <div class="portrait"><canvas id="portrait" width="300" height="400" aria-label="Портрет клиента"></canvas></div>
+          <div class="moods" role="group" aria-label="Настроение клиента">
+            <button type="button" data-mood="0" aria-pressed="false">хмурый</button>
+            <button type="button" data-mood="1" aria-pressed="true">спокойный</button>
+            <button type="button" data-mood="2" aria-pressed="false">довольный</button>
+          </div>
+        </div>
+        <div>
+          <div class="row" style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline">
+            <span class="lbl">Разговор с Кириллом</span>
+            <span class="left-q" id="leftQ">осталось вопросов: 2</span>
+          </div>
+          <div class="log" id="log" style="margin-top:10px"></div>
+          <div class="qs" id="qs"></div>
+        </div>
+      </div>
+
+      <div class="paper price">
+        <div class="row"><span class="lbl">Наряд · микроволновка</span><span class="market">по прайсу 2 500 ₽</span></div>
+        <div class="row" style="margin-top:14px;align-items:flex-end">
+          <span class="big" id="sum">3 250 ₽</span>
+          <span class="mult" id="mult">×1,30</span>
+        </div>
+        <div class="tape-wrap">
+          <div class="tape">
+            <div class="ticks"></div>
+            <div class="nums"><span>0,75</span><span>1,00</span><span>1,25</span><span>1,50</span><span>1,75</span><span>2,00</span></div>
+            <div class="market-mark" style="left:20%"><span>по прайсу</span></div>
+            <div class="cursor" id="cursor"></div>
+            <input type="range" id="slider" min="0.75" max="2" step="0.05" value="1.3" aria-label="Множитель цены">
+          </div>
+        </div>
+        <div class="say" id="say"><span style="color:var(--graphite-soft);font-size:14px">← → меняют на один шаг</span></div>
+        <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+          <button class="btn" type="button" id="offer">Предложить цену</button>
+        </div>
+      </div>
+
+      <div class="paper mini">
+        <div class="row" style="margin-top:0"><span class="lbl">Ремонт · калибровка термостата</span><span class="chip timer" style="box-shadow:none">0:<b id="mtime">20</b></span></div>
+        <canvas id="mini" width="640" height="400" style="margin-top:12px" aria-label="Миниигра калибровки"></canvas>
+        <div class="row">
+          <div class="hits" id="hits"><i></i><i></i><i></i></div>
+          <button class="btn" type="button" id="stop">Стоп · пробел</button>
+        </div>
+      </div>
+
+      <div class="paper protocol" id="protocol">
+        <div class="gerb">
+          <div>
+            <h3>Протокол о нарушении</h3>
+            <div class="num">№ 47-ПР · Служба контроля бытовых услуг</div>
+          </div>
+          <div class="num">общежитие, Лесная 14<br>вызов 2 из 3</div>
+        </div>
+        <table class="ptable">
+          <tr><td>Рыночная цена ремонта</td><td>2 500 ₽</td></tr>
+          <tr><td>Согласованная цена (×1,60)</td><td>4 000 ₽</td></tr>
+          <tr><td>Фактически получено</td><td>4 000 ₽</td></tr>
+          <tr><td>Штраф: 2 × (4 000 − 2 500)</td><td>−3 000 ₽</td></tr>
+          <tr><td>Репутация</td><td>+2 − 8 = −6</td></tr>
+          <tr class="sum"><td>Выявлено нарушений</td><td>1 из 2</td></tr>
+        </table>
+        <div class="sig">
+          <div class="line">Инспектор Дмитрий&nbsp;С.</div>
+          <button class="btn stamp" type="button" id="restamp">Поставить штамп</button>
+        </div>
+        <div class="big-stamp" id="bigstamp" aria-hidden="true">НАРУШЕНИЕ</div>
+      </div>
+
+      <div class="receipt-col">
+        <div class="printer" aria-hidden="true"></div>
+        <div class="receipt" id="receipt">
+          <div class="c">ИП МАСТЕР НА ДЕНЬ<br>ремонт бытовой техники</div>
+          <hr>
+          <div class="l"><span>ЗАКАЗ</span><span>№ 0002</span></div>
+          <div class="l"><span>Клиент</span><span>Кирилл</span></div>
+          <div class="l"><span>Микроволновка</span><span></span></div>
+          <div>замена микровыкл. дверцы</div>
+          <hr>
+          <div class="l"><span>Согласовано</span><span>3 250,00</span></div>
+          <div class="l"><span>Попытка ремонта</span><span>1</span></div>
+          <div class="l tot"><span>ИТОГО</span><span>3 250,00</span></div>
+          <hr>
+          <div class="l"><span>Репутация</span><span>+2</span></div>
+          <div class="c" style="margin-top:6px">СПАСИБО! ЖДЁМ СНОВА</div>
+          <div class="bar"></div>
+        </div>
+        <button class="btn ghost" type="button" id="print" style="color:var(--chalk);box-shadow:inset 0 0 0 2px var(--desk-line)">Напечатать чек</button>
+      </div>
+
+      <div class="paper type">
+        <span class="lbl">Шрифт и палитра</span>
+        <div class="spec" style="margin-top:12px">
+          <span>Nunito 900</span><div class="t900">Вы уже можете переехать!</div>
+          <span>Nunito 800</span><div class="t800">Выбор заказа</div>
+          <span>Nunito 600</span><div class="t600">Предложить цену · Повторить ремонт</div>
+          <span>Nunito 400</span><div class="t400">Клиент хмурится и поджимает губы. Названная сумма для него высока.</div>
+          <span>Neucha</span><div class="thand">сквозь зубы · по прайсу · нужно сегодня</div>
+          <span>PT Mono</span><div class="tmono">ИТОГО 3 250,00 · 0:18 · ×1,30</div>
+        </div>
+        <div class="swatches" id="swatches"></div>
+      </div>
+
+      <div class="rules">
+        <h3>Чего в игре не будет</h3>
+        <ul>
+          <li>неона и свечения ради красоты</li>
+          <li>фиолетовых градиентов и «стекла»</li>
+          <li>эмодзи вместо иконок</li>
+          <li>картинок с нечитаемыми буквами</li>
+          <li>серых кубов без фасок</li>
+          <li>ассетов разного стиля рядом</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <footer>Мастер на день · стиль v1. Сцена собрана процедурно в Three.js, тем же способом будут сделаны комнаты в игре.</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.149.0/build/three.min.js"></script>
+<script>
+(function boot(){
+  const go = () => main();
+  try { Promise.all([document.fonts.load('700 30px Nunito'), document.fonts.load('800 30px Nunito'), document.fonts.load('30px Neucha'), document.fonts.load('20px "PT Mono"')]).then(go, go); } catch(e){ go(); }
+})();
+function main(){
+"use strict";
+const $ = s => document.querySelector(s);
+const fmt = n => Math.round(n).toLocaleString('ru-RU').replace(/ /g,' ');
+
+/* ================= FACE (shared by 3D head and portrait) ================= */
+function drawFace(ctx, w, h, mood, opts){
+  opts = opts || {};
+  const skin = '#e9b48f', skinShade = '#d49a75';
+  if (opts.clear) ctx.clearRect(0,0,w,h);
+  if (opts.full){ ctx.fillStyle = skin; ctx.fillRect(0,0,w,h); }
+  const cx = w/2, cy = h*0.52, s = Math.min(w,h);
+  // cheeks
+  ctx.fillStyle = mood===2 ? 'rgba(232,120,110,.45)' : 'rgba(220,130,110,.22)';
+  ctx.beginPath(); ctx.ellipse(cx - s*0.22, cy + s*0.1, s*0.075, s*0.05, 0, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx + s*0.22, cy + s*0.1, s*0.075, s*0.05, 0, 0, Math.PI*2); ctx.fill();
+  // brows
+  ctx.strokeStyle = '#4a3326'; ctx.lineCap = 'round'; ctx.lineWidth = s*0.035;
+  const by = cy - s*0.15;
+  ctx.beginPath();
+  if (mood===0){ ctx.moveTo(cx-s*0.24, by-s*0.03); ctx.lineTo(cx-s*0.08, by+s*0.03); ctx.moveTo(cx+s*0.24, by-s*0.03); ctx.lineTo(cx+s*0.08, by+s*0.03); }
+  else if (mood===2){ ctx.moveTo(cx-s*0.24, by+s*0.01); ctx.quadraticCurveTo(cx-s*0.16, by-s*0.05, cx-s*0.08, by); ctx.moveTo(cx+s*0.24, by+s*0.01); ctx.quadraticCurveTo(cx+s*0.16, by-s*0.05, cx+s*0.08, by); }
+  else { ctx.moveTo(cx-s*0.24, by); ctx.lineTo(cx-s*0.08, by); ctx.moveTo(cx+s*0.24, by); ctx.lineTo(cx+s*0.08, by); }
+  ctx.stroke();
+  // eyes
+  const ey = cy - s*0.05;
+  ctx.fillStyle = '#2a2d33';
+  for (const dx of [-0.16, 0.16]){
+    ctx.beginPath();
+    if (mood===2){ ctx.lineWidth = s*0.03; ctx.strokeStyle='#2a2d33'; ctx.arc(cx+dx*s, ey+s*0.015, s*0.045, Math.PI*1.1, Math.PI*1.9); ctx.stroke(); }
+    else { const ry = mood===0 ? s*0.026 : s*0.042; ctx.ellipse(cx+dx*s, ey, s*0.036, ry, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(cx+dx*s+s*0.012, ey-s*0.012, s*0.01, 0, Math.PI*2); ctx.fill(); ctx.fillStyle='#2a2d33'; }
+  }
+  // nose
+  ctx.strokeStyle = skinShade; ctx.lineWidth = s*0.028;
+  ctx.beginPath(); ctx.moveTo(cx+s*0.01, cy-s*0.02); ctx.quadraticCurveTo(cx+s*0.05, cy+s*0.07, cx-s*0.01, cy+s*0.08); ctx.stroke();
+  // mouth
+  ctx.strokeStyle = '#7a3b34'; ctx.lineWidth = s*0.03;
+  const my = cy + s*0.2;
+  ctx.beginPath();
+  if (mood===0){ ctx.moveTo(cx-s*0.09, my+s*0.02); ctx.quadraticCurveTo(cx, my-s*0.03, cx+s*0.09, my+s*0.02); }
+  else if (mood===2){ ctx.moveTo(cx-s*0.12, my-s*0.02); ctx.quadraticCurveTo(cx, my+s*0.09, cx+s*0.12, my-s*0.02); }
+  else { ctx.moveTo(cx-s*0.08, my); ctx.lineTo(cx+s*0.08, my); }
+  ctx.stroke();
+  // stubble hint
+  if (opts.stubble){ ctx.fillStyle='rgba(74,51,38,.08)'; ctx.beginPath(); ctx.ellipse(cx, my+s*0.06, s*0.22, s*0.12, 0, 0, Math.PI); ctx.fill(); }
+}
+
+function drawPortrait(mood){
+  const c = $('#portrait'), ctx = c.getContext('2d'), w=c.width, h=c.height;
+  ctx.clearRect(0,0,w,h);
+  // wall
+  ctx.fillStyle='#e8e6dd'; ctx.fillRect(0,0,w,h);
+  ctx.fillStyle='#5e8c6a'; ctx.fillRect(0,h*0.62,w,h*0.38);
+  ctx.fillStyle='rgba(0,0,0,.08)'; ctx.fillRect(0,h*0.62,w,6);
+  // shoulders / sweater
+  ctx.fillStyle='#3f5f8a';
+  ctx.beginPath(); ctx.moveTo(w*0.08,h); ctx.quadraticCurveTo(w*0.12,h*0.7,w*0.5,h*0.68); ctx.quadraticCurveTo(w*0.88,h*0.7,w*0.92,h); ctx.fill();
+  ctx.fillStyle='#e9b48f'; ctx.fillRect(w*0.42,h*0.6,w*0.16,h*0.1);
+  ctx.fillStyle='#2f4c72'; ctx.beginPath(); ctx.moveTo(w*0.38,h*0.69); ctx.lineTo(w*0.5,h*0.78); ctx.lineTo(w*0.62,h*0.69); ctx.fill();
+  // head
+  ctx.save(); ctx.translate(w*0.5,h*0.38);
+  ctx.fillStyle='#e9b48f'; ctx.beginPath(); ctx.ellipse(0,0,w*0.27,h*0.23,0,0,Math.PI*2); ctx.fill();
+  // ears
+  ctx.beginPath(); ctx.ellipse(-w*0.27,h*0.01,w*0.04,h*0.045,0,0,Math.PI*2); ctx.ellipse(w*0.27,h*0.01,w*0.04,h*0.045,0,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+  // face
+  ctx.save(); ctx.translate(w*0.5 - w*0.25, h*0.38 - h*0.2);
+  drawFace(ctx, w*0.5, h*0.42, mood, {stubble:true});
+  ctx.restore();
+  // hair
+  ctx.fillStyle='#4a3326';
+  ctx.beginPath(); ctx.ellipse(w*0.5,h*0.2,w*0.28,h*0.1,0,Math.PI,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(w*0.22,h*0.24); ctx.quadraticCurveTo(w*0.3,h*0.1,w*0.55,h*0.12); ctx.quadraticCurveTo(w*0.72,h*0.12,w*0.79,h*0.26); ctx.quadraticCurveTo(w*0.62,h*0.18,w*0.45,h*0.21); ctx.quadraticCurveTo(w*0.32,h*0.22,w*0.22,h*0.3); ctx.fill();
+}
+
+/* ================= 3D SCENE ================= */
+const canvas = $('#scene');
+let renderer;
+try { renderer = new THREE.WebGLRenderer({canvas, antialias:true, powerPreference:'high-performance'}); }
+catch(e){ canvas.replaceWith(Object.assign(document.createElement('div'),{textContent:'WebGL недоступен в этом браузере',style:'padding:40px;color:#aaa'})); return; }
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.physicallyCorrectLights = false;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#0e1013');
+const camera = new THREE.PerspectiveCamera(60, 16/9, 0.05, 40);
+camera.position.set(0, 1.6, -0.4);
+
+const W = 6.5, D = 5, H = 3;  // room dims; camera at z=0.4 looks toward +z
+const room = new THREE.Group(); scene.add(room);
+
+function mat(color, rough, metal, extra){ return new THREE.MeshStandardMaterial(Object.assign({color:new THREE.Color(color), roughness: rough==null?0.82:rough, metalness: metal||0}, extra||{})); }
+
+function rbox(w,h,d,r,m){
+  r = Math.min(r, w/2-0.001, h/2-0.001, d/2-0.001);
+  const s = new THREE.Shape(), x=-w/2+r, y=-h/2+r, ww=w-2*r, hh=h-2*r;
+  s.moveTo(x, y-r); s.lineTo(x+ww, y-r); s.quadraticCurveTo(x+ww+r, y-r, x+ww+r, y);
+  s.lineTo(x+ww+r, y+hh); s.quadraticCurveTo(x+ww+r, y+hh+r, x+ww, y+hh+r);
+  s.lineTo(x, y+hh+r); s.quadraticCurveTo(x-r, y+hh+r, x-r, y+hh);
+  s.lineTo(x-r, y); s.quadraticCurveTo(x-r, y-r, x, y-r);
+  const bev = Math.min(r, d/2-0.001);
+  const g = new THREE.ExtrudeGeometry(s, {depth: Math.max(0.001, d-2*bev), bevelEnabled:true, bevelThickness:bev, bevelSize:bev*0.6, bevelSegments:2, curveSegments:4});
+  g.center(); g.computeVertexNormals();
+  const mesh = new THREE.Mesh(g, m); mesh.castShadow = true; mesh.receiveShadow = true; return mesh;
+}
+function cyl(rt, rb, h, m, seg){ const me = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg||16), m); me.castShadow = me.receiveShadow = true; return me; }
+function at(o, x, y, z, ry){ o.position.set(x,y,z); if (ry) o.rotation.y = ry; return o; }
+
+function canvasTex(w, h, draw){
+  const c = document.createElement('canvas'); c.width=w; c.height=h; const ctx=c.getContext('2d'); draw(ctx,w,h);
+  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; t.needsUpdate = true; return t;
+}
+function plane(w,h,tex,opts){ const m = new THREE.MeshStandardMaterial(Object.assign({map:tex, roughness:.9}, opts||{})); const p = new THREE.Mesh(new THREE.PlaneGeometry(w,h), m); p.receiveShadow = true; return p; }
+function shadowBlob(w, d, op){
+  const t = canvasTex(128,128,(c)=>{ const g=c.createRadialGradient(64,64,6,64,64,62); g.addColorStop(0,'rgba(0,0,0,'+(op||.55)+')'); g.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=g; c.fillRect(0,0,128,128); });
+  const p = new THREE.Mesh(new THREE.PlaneGeometry(w,d), new THREE.MeshBasicMaterial({map:t, transparent:true, depthWrite:false}));
+  p.rotation.x = -Math.PI/2; return p;
+}
+
+/* ---- location palettes ---- */
+const LOCS = [
+  { name:'Общежитие', wallLow:'#5e8c6a', wallHigh:'#d9d5c6', floor:['#b98756','#a3743f'], ceil:'#efeee8',
+    hemiSky:'#bcd3f0', hemiGround:'#4a4034', hemiI:.32, keyColor:'#ffbf80', keyI:1.05, tube:'#dff1ff', tubeI:.7, lampColor:'#ffa552', lampI:1.6,
+    exposure:.86, view:'dorm', accent:'#d64d3b', note:'казённый зелёный, люминесцентка + настольная лампа' },
+  { name:'Хрущёвка', wallLow:'#b9926a', wallHigh:'#d9c39c', floor:['#7a4e2f','#6a4127'], ceil:'#efe6d6',
+    hemiSky:'#ffe2b0', hemiGround:'#5a3a22', hemiI:.3, keyColor:'#ffc27a', keyI:.8, tube:'#ffd89a', tubeI:.55, lampColor:'#ff9f45', lampI:1.8,
+    exposure:.95, view:'khr', accent:'#8e2433', note:'вольфрам, ковёр, полировка' },
+  { name:'Новостройка', wallLow:'#d7d9d8', wallHigh:'#eef0ef', floor:['#d0b48d','#c3a57c'], ceil:'#f5f6f5',
+    hemiSky:'#f2f6ff', hemiGround:'#9a8f80', hemiI:.5, keyColor:'#ffffff', keyI:1.15, tube:'#ffffff', tubeI:.8, lampColor:'#fff1d6', lampI:.6,
+    exposure:1.0, view:'new', accent:'#2f7dd6', note:'ровный белый, светлое дерево, пусто' },
+  { name:'Элитный ЖК', wallLow:'#2f3b36', wallHigh:'#3c4a44', floor:['#3a2c22','#2e231b'], ceil:'#2a302d',
+    hemiSky:'#9ab2c8', hemiGround:'#2a1f17', hemiI:.22, keyColor:'#ff9047', keyI:1.1, tube:'#ffcf9a', tubeI:.3, lampColor:'#ffb067', lampI:2.2,
+    exposure:1.05, view:'elite', accent:'#c9a24a', note:'камень, латунь, вечер за панорамой' },
+  { name:'Офис', wallLow:'#9aa7b4', wallHigh:'#dfe5ea', floor:['#4f5d6e','#465364'], ceil:'#f0f3f6',
+    hemiSky:'#dbe9ff', hemiGround:'#3d4654', hemiI:.45, keyColor:'#dfefff', keyI:.8, tube:'#eaf3ff', tubeI:1.1, lampColor:'#fff4dc', lampI:.45,
+    exposure:.98, view:'office', accent:'#ef7d2c', note:'световые панели, ковролин, пластик' },
+];
+
+/* ---- room shell ---- */
+const wallLowMat = mat(LOCS[0].wallLow, .9), wallHighMat = mat(LOCS[0].wallHigh, .95), ceilMat = mat(LOCS[0].ceil, .95);
+function floorTexture(a, b){
+  return canvasTex(512,512,(c,w,h)=>{
+    c.fillStyle=a; c.fillRect(0,0,w,h);
+    const pw=64, ph=16;
+    for (let y=0;y<h;y+=ph){ const off=(y/ph%2)*pw/2; for (let x=-pw;x<w;x+=pw){ c.fillStyle = Math.random()<.5?a:b; c.globalAlpha=.55+Math.random()*.45; c.fillRect(x+off+1,y+1,pw-2,ph-2); } }
+    c.globalAlpha=1; c.strokeStyle='rgba(0,0,0,.18)'; c.lineWidth=1.5;
+    for (let y=0;y<h;y+=ph){ c.beginPath(); c.moveTo(0,y); c.lineTo(w,y); c.stroke(); }
+    // grain
+    for (let i=0;i<2500;i++){ c.fillStyle='rgba(0,0,0,'+(Math.random()*.06)+')'; c.fillRect(Math.random()*w, Math.random()*h, Math.random()*18, 1); }
+    // scuffs
+    for (let i=0;i<14;i++){ c.fillStyle='rgba(255,255,255,.05)'; c.beginPath(); c.ellipse(Math.random()*w, Math.random()*h, 20+Math.random()*40, 6+Math.random()*10, Math.random()*3, 0, Math.PI*2); c.fill(); }
+  });
+}
+let floorTex = floorTexture(...LOCS[0].floor); floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping; floorTex.repeat.set(3,2.4);
+const floorMat = new THREE.MeshStandardMaterial({map:floorTex, roughness:.7});
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(W, D), floorMat); floor.rotation.x = -Math.PI/2; floor.position.set(0,0,D/2 - 0.6); floor.receiveShadow = true; room.add(floor);
+const ceil = new THREE.Mesh(new THREE.PlaneGeometry(W, D), ceilMat); ceil.rotation.x = Math.PI/2; ceil.position.set(0,H,D/2-0.6); room.add(ceil);
+const zBack = D - 0.6, zFront = -0.6;
+function wallPair(len, rotY, x, z){
+  const lowH = 1.25;
+  const low = new THREE.Mesh(new THREE.PlaneGeometry(len, lowH), wallLowMat); low.position.set(x, lowH/2, z); low.rotation.y = rotY; low.receiveShadow = true;
+  const high = new THREE.Mesh(new THREE.PlaneGeometry(len, H-lowH), wallHighMat); high.position.set(x, lowH+(H-lowH)/2, z); high.rotation.y = rotY; high.receiveShadow = true;
+  room.add(low, high);
+  // dividing stripe (paint line)
+  const strip = new THREE.Mesh(new THREE.PlaneGeometry(len, 0.03), mat('#3e5e47', .8)); strip.position.set(x, lowH, z); strip.rotation.y = rotY; strip.position.add(new THREE.Vector3(0,0,0).set(Math.sin(rotY)*0.002,0,Math.cos(rotY)*0.002)); room.add(strip);
+  return {low, high, strip};
+}
+const walls = [ wallPair(W, Math.PI, 0, zBack), wallPair(W, 0, 0, zFront), wallPair(D, Math.PI/2, -W/2, D/2-0.6), wallPair(D, -Math.PI/2, W/2, D/2-0.6) ];
+const stripMats = walls.map(w=>w.strip.material);
+// baseboard
+const baseMat = mat('#6b4b32', .7);
+[[W,0,zBack-0.02,0],[D,-W/2+0.02,D/2-0.6,Math.PI/2],[D,W/2-0.02,D/2-0.6,-Math.PI/2]].forEach(([l,x,z,r])=>{ const b = rbox(l,0.09,0.03,0.01,baseMat); at(b,x,0.045,z,r); room.add(b); });
+
+/* ---- window on left wall with view ---- */
+const viewTex = {};
+function makeView(kind){
+  return canvasTex(512,384,(c,w,h)=>{
+    const sky = { dorm:['#f0a868','#7d6aa1'], khr:['#f7c27a','#8a7aa6'], new:['#bcd8f2','#eaf2fb'], elite:['#1c2540','#e1834a'], office:['#cfe0f2','#9fb6d1'] }[kind];
+    const g = c.createLinearGradient(0,0,0,h); g.addColorStop(0,sky[1]); g.addColorStop(1,sky[0]); c.fillStyle=g; c.fillRect(0,0,w,h);
+    const rnd = (a,b)=>a+Math.random()*(b-a);
+    if (kind==='elite'){ for(let i=0;i<26;i++){ const bw=rnd(20,50), bh=rnd(80,300); c.fillStyle='#141a2b'; c.fillRect(i*22-10, h-bh, bw, bh); for(let k=0;k<30;k++){ c.fillStyle=Math.random()<.5?'#ffcf7a':'#2a3350'; c.fillRect(i*22-6+Math.random()*bw*0.8, h-bh+Math.random()*bh, 3,4);} } return; }
+    if (kind==='new'){ c.fillStyle='#c7cfd8'; for (let i=0;i<5;i++){ c.fillRect(30+i*100, h-260+i*12, 70, 260); } c.strokeStyle='#e3a33a'; c.lineWidth=4; c.beginPath(); c.moveTo(380,40); c.lineTo(380,h); c.moveTo(250,60); c.lineTo(500,60); c.stroke(); return; }
+    if (kind==='office'){ c.fillStyle='#8aa2bf'; for (let i=0;i<4;i++){ c.fillRect(i*140, h-220-i*20, 120, 300); c.fillStyle='rgba(255,255,255,.35)'; for(let y=0;y<14;y++) c.fillRect(i*140+6, h-210-i*20+y*16, 108, 8); c.fillStyle='#8aa2bf'; } return; }
+    // dorm / khr : panel building opposite + tree
+    c.fillStyle = kind==='dorm' ? '#c9b8a6' : '#b7a891'; c.fillRect(40, 90, 440, 300);
+    for (let y=0;y<6;y++) for (let x=0;x<9;x++){ const lit = Math.random()<.35; c.fillStyle = lit ? '#ffd27a' : '#5b5f70'; c.fillRect(60+x*48, 110+y*46, 26, 28); if (Math.random()<.2){ c.fillStyle='rgba(255,255,255,.4)'; c.fillRect(60+x*48, 110+y*46+20, 26, 3);} }
+    c.fillStyle='#3f4a3a'; c.beginPath(); c.ellipse(110, 300, 120, 110, 0, 0, Math.PI*2); c.fill(); c.fillStyle='#2e2a24'; c.fillRect(104, 300, 12, 90);
+  });
+}
+const winGroup = new THREE.Group(); room.add(winGroup);
+const winView = plane(1.6, 1.15, makeView('dorm'), {emissive: new THREE.Color('#ffffff'), emissiveIntensity:.0, roughness:1});
+winView.material.emissiveMap = winView.material.map; winView.material.emissiveIntensity = .85;
+winView.position.set(-W/2+0.012, 1.85, 1.35); winView.rotation.y = Math.PI/2; winGroup.add(winView);
+const frameMat = mat('#f1f1ec', .5);
+[[0,0.62,1.75,0.07],[0,-0.62,1.75,0.07],[0.84,0,0.07,1.3],[-0.84,0,0.07,1.3],[0,0,0.05,1.2]].forEach(([dz,dy,w,h])=>{ const f = rbox(0.06, h, w, 0.015, frameMat); at(f, -W/2+0.04, 1.85+dy, 1.35+dz); winGroup.add(f); });
+const sill = rbox(0.28, 0.05, 1.9, 0.02, frameMat); at(sill, -W/2+0.14, 1.24, 1.35); winGroup.add(sill);
+// radiator under window
+const radMat = mat('#e9e9e2', .55);
+for (let i=0;i<9;i++){ const fin = rbox(0.09, 0.55, 0.08, 0.02, radMat); at(fin, -W/2+0.12, 0.72, 0.95+i*0.1); room.add(fin); }
+const pipe = cyl(0.02,0.02,2.2,mat('#d9d9d0',.5)); pipe.rotation.z = Math.PI/2; pipe.rotation.y = Math.PI/2; at(pipe,-W/2+0.06,0.42,1.4); room.add(pipe);
+// cactus on sill
+const pot = cyl(0.07,0.055,0.11,mat('#b5532f',.8)); at(pot, -W/2+0.16, 1.32, 1.85); room.add(pot);
+const cac = new THREE.Mesh(new THREE.CapsuleGeometry(0.035, 0.12, 4, 8), mat('#4f7d3b',.8)); at(cac, -W/2+0.16, 1.44, 1.85); room.add(cac);
+
+/* ---- fluorescent tube ---- */
+const tubeGroup = new THREE.Group(); room.add(tubeGroup);
+const tubeHousing = rbox(1.3, 0.06, 0.22, 0.02, mat('#f2f2ee', .6)); at(tubeHousing, 0, H-0.04, 2.6); tubeGroup.add(tubeHousing);
+const tubeMat = new THREE.MeshStandardMaterial({color:'#ffffff', emissive:new THREE.Color('#e9f6ff'), emissiveIntensity:1.4});
+const tubeMesh = cyl(0.025, 0.025, 1.18, tubeMat, 10); tubeMesh.rotation.z = Math.PI/2; at(tubeMesh, 0, H-0.1, 2.6); tubeMesh.castShadow=false; tubeGroup.add(tubeMesh);
+
+/* ---- lights ---- */
+const hemi = new THREE.HemisphereLight(LOCS[0].hemiSky, LOCS[0].hemiGround, LOCS[0].hemiI); room.add(hemi);
+const tubeLight = new THREE.PointLight(LOCS[0].tube, LOCS[0].tubeI, 9, 1.6); tubeLight.position.set(0, H-0.25, 2.6); room.add(tubeLight);
+const key = new THREE.DirectionalLight(LOCS[0].keyColor, LOCS[0].keyI); key.position.set(-6, 3.4, 1.6); key.target.position.set(0.5,0.6,3); room.add(key, key.target);
+key.castShadow = true; key.shadow.mapSize.set(2048,2048); key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02;
+Object.assign(key.shadow.camera, {left:-4,right:4,top:3.5,bottom:-1,near:1,far:14}); key.shadow.radius = 4; key.shadow.camera.updateProjectionMatrix();
+const lampLight = new THREE.PointLight(LOCS[0].lampColor, LOCS[0].lampI, 3.6, 1.6); room.add(lampLight);
+const rim = new THREE.DirectionalLight('#9fb8ff', .25); rim.position.set(3, 2.6, 5); room.add(rim);
+
+/* ---- back wall furniture: kitchen counter, stove, sink, cabinets ---- */
+const wood = mat('#c8a273', .75), woodDark = mat('#8e6a45', .75), counterTop = mat('#d8d4c8', .55), metal = mat('#c9ccd0', .35, .65), darkPlastic = mat('#2c2f35', .5);
+const kitchen = new THREE.Group(); room.add(kitchen);
+// lower cabinets along back wall (right part, behind client)
+for (let i=0;i<3;i++){ const cab = rbox(0.62, 0.82, 0.58, 0.02, wood); at(cab, 1.2 + i*0.64, 0.41, zBack-0.31); kitchen.add(cab);
+  const door = rbox(0.56, 0.72, 0.02, 0.01, mat('#d6b386',.7)); at(door, 1.2+i*0.64, 0.43, zBack-0.6); kitchen.add(door);
+  const handle = rbox(0.12, 0.02, 0.03, 0.008, metal); at(handle, 1.2+i*0.64, 0.7, zBack-0.62); kitchen.add(handle); }
+const top = rbox(2.0, 0.05, 0.64, 0.015, counterTop); at(top, 1.84, 0.845, zBack-0.32); kitchen.add(top);
+// sink
+const sinkBowl = rbox(0.46, 0.04, 0.4, 0.04, metal); at(sinkBowl, 2.48, 0.875, zBack-0.32); kitchen.add(sinkBowl);
+const tapBase = cyl(0.02,0.025,0.22,metal); at(tapBase, 2.48, 0.98, zBack-0.55); kitchen.add(tapBase);
+const tapSpout = cyl(0.014,0.014,0.2,metal); tapSpout.rotation.x = Math.PI/2; at(tapSpout, 2.48, 1.08, zBack-0.46); kitchen.add(tapSpout);
+// two-burner electric stove «Мечта»
+const stove = rbox(0.5, 0.09, 0.36, 0.02, mat('#e9e6dc',.5)); at(stove, 1.36, 0.915, zBack-0.3); kitchen.add(stove);
+for (const dx of [-0.11, 0.11]){ const b = cyl(0.075,0.075,0.012,darkPlastic,20); at(b, 1.36+dx, 0.966, zBack-0.3); kitchen.add(b); const r = new THREE.Mesh(new THREE.TorusGeometry(0.055,0.006,6,20), mat('#702a1c',.6,0,{emissive:new THREE.Color('#ff4a1c'), emissiveIntensity:dx<0?0.9:0})); r.rotation.x=Math.PI/2; at(r,1.36+dx,0.974,zBack-0.3); kitchen.add(r); }
+const kettlePot = cyl(0.09, 0.11, 0.16, mat('#4f6f8f',.45,.3), 18); at(kettlePot, 1.25, 1.04, zBack-0.3); kitchen.add(kettlePot);
+// upper cabinets
+for (let i=0;i<3;i++){ const uc = rbox(0.62, 0.62, 0.34, 0.02, wood); at(uc, 1.2+i*0.64, 1.95, zBack-0.17); kitchen.add(uc); const ud = rbox(0.56, 0.54, 0.02, 0.01, mat('#d6b386',.7)); at(ud, 1.2+i*0.64, 1.95, zBack-0.35); kitchen.add(ud); }
+// tiles backsplash
+const tileTex = canvasTex(256,128,(c,w,h)=>{ c.fillStyle='#dfe7e3'; c.fillRect(0,0,w,h); c.strokeStyle='#b9c6c0'; c.lineWidth=3; for(let x=0;x<=w;x+=32){c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke();} for(let y=0;y<=h;y+=32){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke();} for(let i=0;i<5;i++){ c.fillStyle='rgba(140,110,60,.12)'; c.fillRect(Math.random()*w,Math.random()*h,30,30);} });
+const splash = plane(2.0, 0.75, tileTex, {roughness:.4}); at(splash, 1.84, 1.25, zBack-0.005, Math.PI); kitchen.add(splash);
+// duty schedule on back wall (left side)
+const schedTex = canvasTex(512,640,(c,w,h)=>{
+  c.fillStyle='#f6f4ec'; c.fillRect(0,0,w,h);
+  c.fillStyle='#2a2d33'; c.font='700 38px Nunito, sans-serif'; c.fillText('ГРАФИК ДЕЖУРСТВ', 40, 64);
+  c.font='22px Nunito, sans-serif'; c.fillStyle='#5b616b'; c.fillText('кухня 3 этажа · ноябрь', 40, 98);
+  const names=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'], who=['Артём','Кирилл','Рома','Паша','Игорь','все','никто'];
+  c.strokeStyle='#9aa1aa'; c.lineWidth=2;
+  for (let i=0;i<7;i++){ const y=130+i*68; c.strokeRect(40,y,w-80,60); c.fillStyle='#2a2d33'; c.font='700 26px Nunito, sans-serif'; c.fillText(names[i],56,y+40); c.font='30px Neucha, cursive'; c.fillStyle= i===6?'#a3294a':'#1e3c8c'; c.fillText(who[i],150,y+42); if (i===1){ c.strokeStyle='#a3294a'; c.lineWidth=3; c.beginPath(); c.moveTo(140,y+32); c.lineTo(300,y+30); c.stroke(); c.strokeStyle='#9aa1aa'; c.lineWidth=2; } }
+  c.fillStyle='rgba(241,208,75,.9)'; c.save(); c.translate(330,560); c.rotate(-.08); c.fillRect(0,0,150,64); c.fillStyle='#3a2f06'; c.font='26px Neucha, cursive'; c.fillText('МОЙТЕ ПЛИТУ!',8,42); c.restore();
+});
+const sched = plane(0.55, 0.69, schedTex); at(sched, -1.2, 1.75, zBack-0.006, Math.PI); room.add(sched);
+// pin on schedule
+const schedPin = new THREE.Mesh(new THREE.SphereGeometry(0.018,10,8), mat('#a3294a',.4)); at(schedPin,-1.2,2.08,zBack-0.02); room.add(schedPin);
+// wall clock
+const clockFace = canvasTex(256,256,(c,w,h)=>{ c.fillStyle='#fbfaf4'; c.beginPath(); c.arc(128,128,124,0,Math.PI*2); c.fill(); c.fillStyle='#2a2d33'; for(let i=0;i<12;i++){ const a=i/12*Math.PI*2; c.fillRect(128+Math.sin(a)*100-3,128-Math.cos(a)*100-8, 6, 16);} c.font='700 22px Nunito'; c.textAlign='center'; c.fillText('ЗАРЯ',128,90); });
+const clockBody = cyl(0.17,0.17,0.04,mat('#a3294a',.5),28); clockBody.rotation.x=Math.PI/2; at(clockBody, -0.2, 2.45, zBack-0.03); room.add(clockBody);
+const clockPlane = plane(0.3,0.3,clockFace,{transparent:true}); at(clockPlane,-0.2,2.45,zBack-0.052); clockPlane.rotation.y=Math.PI; room.add(clockPlane);
+const handMin = rbox(0.008, 0.12, 0.004, 0.002, mat('#2a2d33')); const handHr = rbox(0.012, 0.08, 0.004, 0.002, mat('#2a2d33'));
+const hands = new THREE.Group(); hands.add(handMin, handHr); handMin.position.y=0.05; handHr.position.y=0.035; at(hands,-0.2,2.45,zBack-0.058); room.add(hands);
+// poster on right wall
+const posterTex = canvasTex(400,560,(c,w,h)=>{ c.fillStyle='#2f4f8f'; c.fillRect(0,0,w,h); c.fillStyle='#f1d04b'; c.beginPath(); c.arc(200,220,120,0,Math.PI*2); c.fill(); c.fillStyle='#2f4f8f'; c.beginPath(); c.arc(240,200,110,0,Math.PI*2); c.fill(); c.fillStyle='#f6f4ec'; c.font='900 52px Nunito'; c.textAlign='center'; c.fillText('СЕССИЯ', 200, 430); c.font='30px Neucha'; c.fillText('сдадим. наверное', 200, 480); });
+const poster = plane(0.55, 0.77, posterTex); poster.rotation.y = -Math.PI/2; at(poster, W/2-0.006, 1.95, 1.5); poster.rotation.y = -Math.PI/2; room.add(poster);
+// outlet + extension cord
+const outlet = rbox(0.08,0.08,0.02,0.01,mat('#f2f2ee',.5)); at(outlet, -0.55, 0.32, zBack-0.01); room.add(outlet);
+// trash bin
+const bin = cyl(0.15,0.13,0.38,mat('#4d7c8a',.6),18); at(bin, 0.62, 0.19, zBack-0.35); room.add(bin);
+const binBag = cyl(0.155,0.155,0.03,mat('#202226',.4),18); at(binBag, 0.62, 0.39, zBack-0.35); room.add(binBag);
+// stools
+function stool(x,z){ const g=new THREE.Group(); const seat=cyl(0.17,0.17,0.04,mat('#b33a2e',.6),20); seat.position.y=0.48; g.add(seat); for(const [dx,dz] of [[.1,.1],[-.1,.1],[.1,-.1],[-.1,-.1]]){ const leg=cyl(0.014,0.014,0.47,metal,6); leg.position.set(dx,0.235,dz); g.add(leg);} at(g,x,0,z); return g; }
+room.add(stool(-0.4, 4.05)); room.add(stool(0.35, 4.15));
+
+/* ---- device table + microwave (device point 0,0,3.5) ---- */
+const dTable = new THREE.Group(); room.add(dTable);
+const tTop = rbox(1.2, 0.05, 0.7, 0.015, mat('#e8e2d2',.55)); at(tTop, 0, 0.76, 3.6); dTable.add(tTop);
+for (const [dx,dz] of [[.54,.29],[-.54,.29],[.54,-.29],[-.54,-.29]]){ const l=cyl(0.02,0.02,0.74,metal,8); at(l,dx,0.37,3.6+dz); dTable.add(l); }
+const oilcloth = canvasTex(256,256,(c,w,h)=>{ c.fillStyle='#e8e2d2'; c.fillRect(0,0,w,h); c.fillStyle='rgba(163,41,74,.5)'; for(let y=0;y<h;y+=32) for(let x=(y/32%2)*16;x<w;x+=32){ c.fillRect(x,y,16,16);} });
+const cloth = plane(1.18, 0.68, oilcloth, {roughness:.5}); cloth.rotation.x=-Math.PI/2; at(cloth,0,0.786,3.6); dTable.add(cloth);
+const microwave = new THREE.Group();
+const mwBody = rbox(0.56, 0.32, 0.4, 0.035, mat('#f0efe9',.45)); mwBody.position.y = 0.16; microwave.add(mwBody);
+const mwDoor = rbox(0.38, 0.25, 0.02, 0.02, mat('#222428',.25,.1)); mwDoor.position.set(-0.07, 0.16, -0.205); microwave.add(mwDoor);
+const mwPanel = rbox(0.12, 0.27, 0.02, 0.012, mat('#d7d6cf',.5)); mwPanel.position.set(0.2, 0.16, -0.205); microwave.add(mwPanel);
+const mwDisp = new THREE.Mesh(new THREE.PlaneGeometry(0.08,0.035), new THREE.MeshBasicMaterial({color:'#4cff9a'})); mwDisp.position.set(0.2,0.25,-0.217); mwDisp.rotation.y=Math.PI; microwave.add(mwDisp);
+for (let i=0;i<3;i++){ const k = cyl(0.016,0.016,0.015,darkPlastic,12); k.rotation.x=Math.PI/2; k.position.set(0.2, 0.18-i*0.05, -0.218); microwave.add(k); }
+const mwHandle = rbox(0.02,0.2,0.03,0.008,metal); mwHandle.position.set(0.11,0.16,-0.225); microwave.add(mwHandle);
+at(microwave, 0, 0.79, 3.62); dTable.add(microwave);
+const crumbs = shadowBlob(0.9,0.6,.35); at(crumbs, 0, 0.787, 3.62); dTable.add(crumbs);
+const tableShadow = shadowBlob(1.6, 1.1, .5); at(tableShadow, 0, 0.004, 3.6); room.add(tableShadow);
+
+/* ---- client (2.2, 0, 3.6) ---- */
+const client = new THREE.Group(); room.add(client);
+const sweater = mat('#3f5f8a', .85), jeans = mat('#36414f', .8), skinM = mat('#e9b48f', .7), hairM = mat('#4a3326', .9), shoeM = mat('#2a2622', .7);
+const torso = rbox(0.46, 0.6, 0.28, 0.12, sweater); torso.position.y = 1.18; client.add(torso);
+const belly = new THREE.Mesh(new THREE.SphereGeometry(0.2, 14, 10), sweater); belly.scale.set(1.05,0.85,0.62); belly.position.set(0,1.0,-0.03); belly.castShadow=true; client.add(belly);
+for (const dx of [-0.11, 0.11]){ const leg = rbox(0.17, 0.8, 0.2, 0.07, jeans); leg.position.set(dx, 0.48, 0); client.add(leg); const shoe = rbox(0.18, 0.08, 0.28, 0.04, shoeM); shoe.position.set(dx, 0.04, -0.04); client.add(shoe); }
+const armL = new THREE.Group(), armR = new THREE.Group();
+[armL, armR].forEach((arm, i)=>{ const s = i?1:-1; const up = rbox(0.13, 0.5, 0.14, 0.06, sweater); up.position.y = -0.24; arm.add(up); const hand = new THREE.Mesh(new THREE.SphereGeometry(0.065, 10, 8), skinM); hand.position.y = -0.53; hand.castShadow=true; arm.add(hand); arm.position.set(s*0.3, 1.44, 0); arm.rotation.z = s*0.08; client.add(arm); });
+const neck = cyl(0.07,0.08,0.1,skinM,10); neck.position.y = 1.52; client.add(neck);
+const head = new THREE.Group(); head.position.y = 1.72; client.add(head);
+const skull = new THREE.Mesh(new THREE.SphereGeometry(0.2, 22, 16), skinM); skull.scale.set(1, 1.08, 0.98); skull.castShadow = true; head.add(skull);
+for (const dx of [-0.2,0.2]){ const ear = new THREE.Mesh(new THREE.SphereGeometry(0.045,8,6), skinM); ear.scale.set(0.5,1,0.8); ear.position.set(dx,0.0,0.01); head.add(ear); }
+const hair = new THREE.Mesh(new THREE.SphereGeometry(0.212, 20, 12, 0, Math.PI*2, 0, Math.PI*0.48), hairM); hair.scale.set(1.02,1.05,1.02); hair.rotation.x = -0.25; hair.position.set(0,0.035,0.02); head.add(hair);
+const fringe = rbox(0.3, 0.07, 0.1, 0.035, hairM); fringe.position.set(0.03, 0.15, -0.15); fringe.rotation.z = -0.15; head.add(fringe);
+const faceCanvas = document.createElement('canvas'); faceCanvas.width = 256; faceCanvas.height = 256;
+const faceTex = new THREE.CanvasTexture(faceCanvas); faceTex.encoding = THREE.sRGBEncoding;
+const faceMesh = new THREE.Mesh(new THREE.SphereGeometry(0.203, 24, 16, Math.PI*1.18, Math.PI*0.64, Math.PI*0.22, Math.PI*0.56), new THREE.MeshStandardMaterial({map:faceTex, transparent:true, roughness:.7}));
+faceMesh.scale.copy(skull.scale); head.add(faceMesh);
+let mood = 1;
+function setFace(m){ mood = m; const ctx = faceCanvas.getContext('2d'); drawFace(ctx, 256, 256, m, {stubble:true, clear:true}); faceTex.needsUpdate = true; drawPortrait(m); document.querySelectorAll('.moods button').forEach(b=>b.setAttribute('aria-pressed', String(+b.dataset.mood===m))); }
+client.position.set(-2.2, 0, 3.6); client.rotation.y = -0.6; // face toward camera
+const clientShadow = shadowBlob(0.9,0.7,.55); at(clientShadow, -2.2, 0.005, 3.6); room.add(clientShadow);
+
+/* ---- surfaces A–D (1.1 m) ---- */
+const surfMat = mat('#a7825a', .75), surfLeg = mat('#6e5238', .8);
+function surface(x, z, style){
+  const g = new THREE.Group();
+  if (style==='nightstand'){ const body = rbox(0.62, 1.05, 0.5, 0.025, surfMat); body.position.y=0.525; g.add(body); const drw = rbox(0.54,0.24,0.02,0.01,mat('#bb966c',.7)); drw.position.set(0,0.82,-0.26); g.add(drw); const kn=new THREE.Mesh(new THREE.SphereGeometry(0.02,8,6),metal); kn.position.set(0,0.82,-0.28); g.add(kn); const t=rbox(0.68,0.05,0.56,0.015,mat('#8e6a45',.6)); t.position.y=1.075; g.add(t); }
+  else if (style==='shelf'){ for (const y of [0.35, 0.72, 1.075]){ const s = rbox(0.8, 0.04, 0.42, 0.012, surfMat); s.position.y=y; g.add(s);} for (const dx of [-.38,.38]){ const side = rbox(0.04,1.1,0.42,0.012,surfLeg); side.position.set(dx,0.55,0); g.add(side);} // books
+    const colors=['#a3294a','#1e3c8c','#2f7d4f','#d9b52e','#5b616b']; for (let i=0;i<7;i++){ const bk = rbox(0.06, 0.24+Math.random()*0.06, 0.28, 0.008, mat(colors[i%5],.7)); bk.position.set(-0.3+i*0.075, 0.49, 0); bk.rotation.z = i===6?0.25:0; g.add(bk);} const jar = cyl(0.07,0.07,0.16,mat('#cfe3e9',.2,0,{transparent:true,opacity:.6}),12); jar.position.set(0.15,0.82,0); g.add(jar); }
+  else { const t = rbox(0.72, 0.05, 0.6, 0.015, surfMat); t.position.y=1.075; g.add(t); for (const [dx,dz] of [[.31,.25],[-.31,.25],[.31,-.25],[-.31,-.25]]){ const l = rbox(0.045,1.05,0.045,0.01,surfLeg); l.position.set(dx,0.525,dz); g.add(l);} const shelf=rbox(0.66,0.03,0.54,0.01,surfMat); shelf.position.y=0.35; g.add(shelf); const box=rbox(0.3,0.18,0.25,0.01,mat('#c9a77a',.9)); box.position.set(-0.1,0.46,0); g.add(box); }
+  g.position.set(x, 0, z); g.lookAt(0, 0, 0.4); g.rotation.y += Math.PI; // front to camera
+  g.traverse(o=>{ if (o.isMesh){ o.castShadow = o.receiveShadow = true; }});
+  const sh = shadowBlob(1.0,0.85,.5); sh.position.set(x,0.004,z); room.add(sh);
+  room.add(g); return g;
+}
+surface(2.4, 2.4, 'nightstand'); surface(0.8, 3.0, 'table'); surface(-0.8, 3.0, 'shelf'); surface(-2.4, 2.4, 'table');
+
+/* ---- interactive items ---- */
+const items = [];
+function addItem(group, x, z, info){
+  group.position.set(x, 1.1, z);
+  group.lookAt(0, 1.1, 0.4);
+  group.traverse(o=>{ if (o.isMesh){ o.castShadow = true; o.receiveShadow = true; o.userData.item = info; }});
+  // outline shell (inverted hull)
+  const outline = new THREE.Group();
+  group.traverse(o=>{ if (o.isMesh && !o.userData.noOutline){ const om = new THREE.Mesh(o.geometry, outlineMat); om.userData.isOutline = true; outline.add(om); om.matrixAutoUpdate=false; om.userData.src = o; }});
+  outline.visible = false; scene.add(outline);
+  info.group = group; info.outline = outline; items.push(info);
+  room.add(group);
+}
+const outlineMat = new THREE.MeshBasicMaterial({color:'#fff6c9', side:THREE.BackSide});
+// A: expensive laptop (ambiguous)
+(function(){
+  const g = new THREE.Group();
+  const base = rbox(0.42, 0.022, 0.29, 0.01, mat('#b9bcc2', .3, .8)); base.position.y = 0.011; g.add(base);
+  const kb = new THREE.Mesh(new THREE.PlaneGeometry(0.36,0.12), mat('#2b2e33',.6)); kb.rotation.x=-Math.PI/2; kb.position.set(0,0.0225,0.03); kb.userData.noOutline=true; g.add(kb);
+  const lid = new THREE.Group(); const lidM = rbox(0.42, 0.28, 0.014, 0.01, mat('#b9bcc2', .3, .8)); lidM.position.y = 0.14; lid.add(lidM);
+  const scrTex = canvasTex(420,280,(c,w,h)=>{ const g2=c.createLinearGradient(0,0,w,h); g2.addColorStop(0,'#1f3c6e'); g2.addColorStop(1,'#6a3d7a'); c.fillStyle=g2; c.fillRect(0,0,w,h); c.fillStyle='rgba(255,255,255,.85)'; c.font='600 22px Nunito'; c.fillText('Квартальный отчёт.xlsx', 24, 46); c.fillStyle='rgba(255,255,255,.18)'; for(let i=0;i<7;i++) c.fillRect(24, 70+i*28, 300 - i*20, 14); });
+  const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.38,0.24), new THREE.MeshBasicMaterial({map:scrTex})); scr.position.set(0,0.14,0.008); scr.userData.noOutline = true; lid.add(scr);
+  lid.position.set(0, 0.022, -0.14); lid.rotation.x = -0.32; g.add(lid);
+  const sticker = new THREE.Mesh(new THREE.PlaneGeometry(0.05,0.05), new THREE.MeshBasicMaterial({map:canvasTex(64,64,(c)=>{c.fillStyle='#f1d04b';c.fillRect(0,0,64,64);c.fillStyle='#2a2d33';c.font='700 14px Nunito';c.fillText('инв.',8,26);c.fillText('№ 0417',4,48);})}));
+  sticker.position.set(0.15,0.14,-0.009); sticker.rotation.y=Math.PI; sticker.userData.noOutline=true; lid.add(sticker);
+  addItem(g, 2.4, 2.4, {title:'Дорогой ноутбук', fact:'Тонкий алюминиевый ноутбук последней модели. На крышке наклейка «инв. № 0417».', kind:'неоднозначный'});
+})();
+// B: sticker «нужно сегодня» on a stack of notebooks
+(function(){
+  const g = new THREE.Group();
+  const cols = ['#1e3c8c','#2f7d4f','#e6eaec'];
+  cols.forEach((c,i)=>{ const nb = rbox(0.24, 0.02, 0.32, 0.006, mat(c,.75)); nb.position.y = 0.01 + i*0.021; nb.rotation.y = (i-1)*0.12; g.add(nb); });
+  const st = new THREE.Mesh(new THREE.PlaneGeometry(0.13,0.13), new THREE.MeshStandardMaterial({map:canvasTex(256,256,(c)=>{ c.fillStyle='#f1d04b'; c.fillRect(0,0,256,256); c.fillStyle='rgba(0,0,0,.06)'; c.fillRect(0,0,256,40); c.fillStyle='#1e3c8c'; c.font='56px Neucha, cursive'; c.fillText('нужно',40,120); c.fillText('сегодня!',22,190); c.strokeStyle='#a3294a'; c.lineWidth=6; c.beginPath(); c.moveTo(24,210); c.quadraticCurveTo(128,230,232,206); c.stroke(); }), roughness:.85}));
+  st.rotation.x = -Math.PI/2; st.rotation.z = 0.2; st.position.set(0.02, 0.066, 0); g.add(st);
+  const pen = cyl(0.007,0.007,0.15,mat('#1e3c8c',.4),8); pen.rotation.z=Math.PI/2; pen.rotation.y=0.6; pen.position.set(0.02,0.072,0.12); g.add(pen);
+  addItem(g, 0.8, 3.0, {title:'Стикер на тетрадях', fact:'На стикере написано: «нужно сегодня!» — и подчёркнуто красным.', kind:'достоверный признак'});
+})();
+// C: mug (neutral)
+(function(){
+  const g = new THREE.Group();
+  const mugM = mat('#e6eaec', .35);
+  const body = cyl(0.055, 0.05, 0.11, mugM, 20); body.position.y = 0.055; g.add(body);
+  const handle = new THREE.Mesh(new THREE.TorusGeometry(0.032, 0.009, 8, 16, Math.PI), mugM); handle.rotation.z = -Math.PI/2; handle.position.set(0.058, 0.058, 0); g.add(handle);
+  const tea = cyl(0.05,0.05,0.004,mat('#6b3a1e',.2),20); tea.position.y=0.098; tea.userData.noOutline=true; g.add(tea);
+  const label = new THREE.Mesh(new THREE.CylinderGeometry(0.0555,0.0555,0.04,20,1,true,-0.7,1.4), new THREE.MeshStandardMaterial({map:canvasTex(256,64,(c)=>{c.fillStyle='#a3294a';c.fillRect(0,0,256,64);c.fillStyle='#fff';c.font='800 30px Nunito';c.fillText('ЛУЧШИЙ СТУДЕНТ',8,44);}), roughness:.4})); label.position.y=0.06; label.userData.noOutline=true; g.add(label);
+  const spoon = rbox(0.012,0.004,0.13,0.002,metal); spoon.position.set(-0.11,0.003,0.04); spoon.rotation.y=0.5; g.add(spoon);
+  addItem(g, -0.8, 3.0, {title:'Кружка', fact:'Перед вами кружка с надписью «Лучший студент». Чай давно остыл.', kind:'нейтральный'});
+})();
+// D: dictaphone with blinking LED (suspicious)
+let ledMat;
+(function(){
+  const g = new THREE.Group();
+  const body = rbox(0.06, 0.13, 0.025, 0.012, mat('#3a3d44', .35, .3)); body.position.set(0, 0.0125, 0); body.rotation.x = -Math.PI/2; g.add(body);
+  body.position.y = 0.013;
+  const grill = new THREE.Mesh(new THREE.PlaneGeometry(0.04,0.03), mat('#1c1e22',.8)); grill.rotation.x=-Math.PI/2; grill.position.set(0,0.0265,-0.035); grill.userData.noOutline=true; g.add(grill);
+  ledMat = new THREE.MeshBasicMaterial({color:'#ff2a2a'});
+  const led = new THREE.Mesh(new THREE.SphereGeometry(0.006, 8, 6), ledMat); led.position.set(0.018, 0.028, 0.045); led.userData.noOutline=true; g.add(led);
+  const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.035,0.018), new THREE.MeshBasicMaterial({map:canvasTex(128,64,(c)=>{c.fillStyle='#9fd3b5';c.fillRect(0,0,128,64);c.fillStyle='#0c2a1a';c.font='700 30px "PT Mono", monospace';c.fillText('● REC',8,44);})})); scr.rotation.x=-Math.PI/2; scr.position.set(0,0.0266,0.012); scr.userData.noOutline=true; g.add(scr);
+  const papers = rbox(0.21, 0.006, 0.29, 0.002, mat('#f6f4ec',.9)); papers.position.set(-0.06, 0.003, 0.02); papers.rotation.y = 0.2; g.add(papers);
+  const keys = new THREE.Mesh(new THREE.TorusGeometry(0.02,0.004,6,14), metal); keys.rotation.x=-Math.PI/2; keys.position.set(0.12,0.004,0.06); g.add(keys);
+  addItem(g, -2.4, 2.4, {title:'Диктофон', fact:'Диктофон с горящим индикатором записи. Лежит на стопке бумаг.', kind:'подозрительный'});
+})();
+// desk lamp on nightstand A for warm pool
+const lamp = new THREE.Group();
+const lb = cyl(0.07,0.08,0.02,mat('#2f7d4f',.5),16); lamp.add(lb);
+const la = cyl(0.008,0.008,0.32,metal,6); la.position.set(0,0.16,0); la.rotation.z=0.25; lamp.add(la);
+const lsh = new THREE.Mesh(new THREE.ConeGeometry(0.08,0.11,16,1,true), mat('#2f7d4f',.5,0,{side:THREE.DoubleSide})); lsh.position.set(-0.06,0.33,0); lsh.rotation.z=2.1; lamp.add(lsh);
+const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.025,10,8), new THREE.MeshBasicMaterial({color:'#ffd9a0'})); bulb.position.set(-0.035,0.31,0); lamp.add(bulb);
+lamp.position.set(2.62,1.1,2.62); room.add(lamp);
+lampLight.position.set(2.55, 1.45, 2.55);
+
+
+/* ---- extra dressing: fridge «Саратов», coat hooks, calendar, slippers, bags ---- */
+const fridge = new THREE.Group();
+const frBody = rbox(0.58, 1.42, 0.6, 0.06, mat('#eceae2', .45)); frBody.position.y = 0.71; fridge.add(frBody);
+const frLine = rbox(0.585, 0.012, 0.02, 0.004, mat('#b9b6ac',.6)); frLine.position.set(0, 1.05, -0.3); fridge.add(frLine);
+const frHandle = rbox(0.03, 0.26, 0.04, 0.012, metal); frHandle.position.set(0.22, 1.2, -0.32); fridge.add(frHandle);
+const frBadge = new THREE.Mesh(new THREE.PlaneGeometry(0.16,0.04), new THREE.MeshStandardMaterial({map:canvasTex(256,64,(c)=>{c.fillStyle='#c9ccd0';c.fillRect(0,0,256,64);c.fillStyle='#2a2d33';c.font='italic 800 40px Nunito';c.fillText('Саратов',30,46);}), metalness:.6, roughness:.3}));
+frBadge.position.set(-0.12, 1.32, -0.302); frBadge.rotation.y = Math.PI; fridge.add(frBadge);
+const magnets = ['#a3294a','#f1d04b','#1e3c8c','#2f7d4f'];
+magnets.forEach((c,i)=>{ const m = rbox(0.05,0.04,0.012,0.008,mat(c,.4)); m.position.set(-0.16+i*0.09, 0.9-(i%2)*0.08, -0.305); fridge.add(m); });
+const frNote = new THREE.Mesh(new THREE.PlaneGeometry(0.15,0.19), new THREE.MeshStandardMaterial({map:canvasTex(160,200,(c)=>{c.fillStyle='#f6f4ec';c.fillRect(0,0,160,200);c.fillStyle='#1e3c8c';c.font='26px Neucha';['не трогать!','это моё','— Рома'].forEach((t,i)=>c.fillText(t,10,46+i*44));}), roughness:.9}));
+frNote.position.set(0.02, 0.72, -0.307); frNote.rotation.set(0, Math.PI, 0.08); fridge.add(frNote);
+fridge.traverse(o=>{ if (o.isMesh){ o.castShadow = o.receiveShadow = true; }});
+at(fridge, -2.5, 0, 3.95); fridge.rotation.y = Math.PI*0.5 + Math.PI; room.add(fridge);
+const frSh = shadowBlob(0.9,0.9,.55); at(frSh, -2.5, 0.004, 3.95); room.add(frSh);
+// coat hooks with jacket on back wall
+const hookBar = rbox(0.8, 0.06, 0.04, 0.015, woodDark); at(hookBar, -0.35, 1.9, zBack-0.03); room.add(hookBar);
+for (let i=0;i<4;i++){ const hk = cyl(0.012,0.012,0.08,metal,6); hk.rotation.x=Math.PI/2; at(hk,-0.65+i*0.2,1.9,zBack-0.08); room.add(hk); }
+const jacket = rbox(0.42, 0.75, 0.12, 0.08, mat('#7a3b34', .85)); at(jacket, -0.45, 1.5, zBack-0.1); jacket.rotation.z = 0.05; room.add(jacket);
+const bag = rbox(0.3, 0.36, 0.1, 0.05, mat('#e8e6dd', .9)); at(bag, -0.05, 1.62, zBack-0.09); bag.rotation.z=-0.08; room.add(bag);
+const bagLogo = new THREE.Mesh(new THREE.PlaneGeometry(0.14,0.14), new THREE.MeshBasicMaterial({map:canvasTex(128,128,(c)=>{c.fillStyle='#e8e6dd';c.fillRect(0,0,128,128);c.fillStyle='#d64d3b';c.beginPath();c.arc(64,58,34,0,Math.PI*2);c.fill();c.fillStyle='#fff';c.font='900 30px Nunito';c.textAlign='center';c.fillText('%',64,70);c.fillStyle='#2a2d33';c.font='800 16px Nunito';c.fillText('АКЦИЯ',64,116);})}));
+bagLogo.position.set(-0.05,1.6,zBack-0.146); bagLogo.rotation.set(0,Math.PI,-0.08); room.add(bagLogo);
+// wall calendar
+const calTex = canvasTex(256,360,(c,w,h)=>{ c.fillStyle='#fbfaf4'; c.fillRect(0,0,w,h); c.fillStyle='#1e3c8c'; c.fillRect(0,0,w,120); c.fillStyle='#fff'; c.font='900 40px Nunito'; c.fillText('НОЯБРЬ',20,72); c.font='22px Nunito'; c.fillText('2026',20,104); c.fillStyle='#2a2d33'; c.font='700 20px "PT Mono"'; for(let i=0;i<30;i++){ const x=20+(i%7)*33, y=150+Math.floor(i/7)*42; c.fillText(String(i+1),x,y); } c.strokeStyle='#a3294a'; c.lineWidth=4; c.beginPath(); c.arc(20+6*33+10, 150+0*42-7, 17, 0, Math.PI*2); c.stroke(); c.fillStyle='#a3294a'; c.font='22px Neucha'; c.fillText('сессия!!',120,345); });
+const cal = plane(0.3, 0.42, calTex); at(cal, -2.0, 1.8, zBack-0.006, Math.PI); room.add(cal);
+// slippers & bag on floor
+for (const dx of [-0.08, 0.08]){ const sl = rbox(0.1, 0.04, 0.26, 0.04, mat('#3d6d8a',.85)); at(sl, -1.55+dx, 0.02, 3.15, -0.3); room.add(sl); }
+const plastic = rbox(0.26, 0.3, 0.2, 0.09, mat('#f2f0e8', .6)); at(plastic, -1.9, 0.15, 4.0, 0.4); room.add(plastic);
+// ceiling cracks & stain decal
+const stain = plane(0.9,0.7, canvasTex(256,200,(c,w,h)=>{ const g=c.createRadialGradient(128,100,10,128,100,110); g.addColorStop(0,'rgba(150,120,60,.35)'); g.addColorStop(.7,'rgba(150,120,60,.18)'); g.addColorStop(1,'rgba(150,120,60,0)'); c.fillStyle=g; c.fillRect(0,0,w,h); }), {transparent:true, depthWrite:false});
+stain.rotation.x = Math.PI/2; at(stain, -1.4, H-0.005, 3.2); room.add(stain);
+const peel = plane(0.5,0.3, canvasTex(200,120,(c)=>{ c.fillStyle='rgba(120,140,120,.25)'; c.beginPath(); c.moveTo(10,60); for(let i=0;i<14;i++) c.lineTo(10+i*13, 40+Math.random()*50); c.lineTo(190,110); c.lineTo(10,110); c.fill(); }), {transparent:true, depthWrite:false});
+at(peel, 2.6, 1.15, zBack-0.007, Math.PI); room.add(peel);
+
+/* ---- dust motes ---- */
+const motes = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({color:'#fff3d6', size:0.012, transparent:true, opacity:.5, depthWrite:false}));
+{ const n=260, p=new Float32Array(n*3); for(let i=0;i<n;i++){ p[i*3]=-3+Math.random()*3.5; p[i*3+1]=0.4+Math.random()*2.4; p[i*3+2]=0.6+Math.random()*3.6; } motes.geometry.setAttribute('position', new THREE.BufferAttribute(p,3)); }
+room.add(motes);
+
+/* ---- apply location look ---- */
+let curLoc = 0;
+function applyLoc(i){
+  const L = LOCS[i]; curLoc = i;
+  wallLowMat.color.set(L.wallLow); wallHighMat.color.set(L.wallHigh); ceilMat.color.set(L.ceil);
+  stripMats.forEach(m=>m.color.set(new THREE.Color(L.wallLow).multiplyScalar(0.7)));
+  const nt = floorTexture(...L.floor); nt.wrapS = nt.wrapT = THREE.RepeatWrapping; nt.repeat.copy(floorTex.repeat); floorMat.map.dispose(); floorMat.map = nt; floorTex = nt; floorMat.needsUpdate = true;
+  hemi.color.set(L.hemiSky); hemi.groundColor.set(L.hemiGround); hemi.intensity = L.hemiI;
+  key.color.set(L.keyColor); key.intensity = L.keyI;
+  tubeLight.color.set(L.tube); tubeLight.intensity = L.tubeI; tubeMat.emissive.set(L.tube);
+  lampLight.color.set(L.lampColor); lampLight.intensity = L.lampI;
+  renderer.toneMappingExposure = L.exposure;
+  if (!viewTex[L.view]) viewTex[L.view] = makeView(L.view);
+  winView.material.map = viewTex[L.view]; winView.material.emissiveMap = viewTex[L.view]; winView.material.needsUpdate = true;
+  sweater.color.set(['#3f5f8a','#6b4a7a','#2f6b6b','#1f2a3a','#d9dde3'][i]);
+  surfMat.color.set(['#a7825a','#7a4e2f','#d7c3a2','#2a2522','#c9ced4'][i]);
+  document.querySelectorAll('.loc-switch button').forEach(b=>b.setAttribute('aria-pressed', String(+b.dataset.loc===i)));
+}
+
+/* ---- camera control ---- */
+let yaw = 0, pitch = -4, tYaw = 0, tPitch = -4;
+const YAW = 65, PITCH = 25;
+let dragging = false, moved = 0, lx = 0, ly = 0;
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+let hovered = null, noteOpen = false;
+canvas.addEventListener('pointerdown', e=>{ if (noteOpen) return; dragging = true; moved = 0; lx = e.clientX; ly = e.clientY; canvas.setPointerCapture(e.pointerId); });
+canvas.addEventListener('pointermove', e=>{
+  const r = canvas.getBoundingClientRect(); ndc.set(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
+  if (dragging){ const dx = e.clientX-lx, dy = e.clientY-ly; moved += Math.abs(dx)+Math.abs(dy); lx = e.clientX; ly = e.clientY;
+    tYaw = Math.max(-YAW, Math.min(YAW, tYaw - dx*0.18)); tPitch = Math.max(-PITCH, Math.min(PITCH, tPitch + dy*0.14)); if (moved>4) canvas.classList.add('drag'); }
+  else pick();
+});
+canvas.addEventListener('pointerup', e=>{ canvas.classList.remove('drag'); if (dragging && moved < 6){ pick(); if (hovered) openNote(hovered); } dragging = false; });
+canvas.addEventListener('pointerleave', ()=>{ if (!dragging) setHover(null); });
+function pick(){
+  if (noteOpen) return;
+  ray.setFromCamera(ndc, camera);
+  const meshes = []; items.forEach(it=>it.group.traverse(o=>{ if (o.isMesh) meshes.push(o); }));
+  const hit = ray.intersectObjects(meshes, false)[0];
+  setHover(hit ? hit.object.userData.item : null);
+}
+function setHover(it){ if (hovered === it) return; if (hovered) hovered.outline.visible = false; hovered = it; if (it) it.outline.visible = true; canvas.classList.toggle('hover', !!it); }
+const seen = new Set();
+function openNote(it){
+  noteOpen = true; $('#noteTitle').textContent = it.title; $('#noteFact').textContent = it.fact; $('#note').hidden = false; $('#noteClose').focus();
+  seen.add(it.title); $('#hint').textContent = 'осмотрено предметов: ' + seen.size + ' из 4';
+}
+function closeNote(){ noteOpen = false; $('#note').hidden = true; }
+$('#noteClose').addEventListener('click', closeNote);
+window.addEventListener('keydown', e=>{ if (e.key==='Escape' && noteOpen) closeNote(); });
+document.querySelectorAll('.loc-switch button').forEach(b=>b.addEventListener('click', ()=>applyLoc(+b.dataset.loc)));
+
+/* ---- resize & loop ---- */
+function resize(){ const r = canvas.getBoundingClientRect(); const w = Math.max(1, r.width), h = Math.max(1, r.height); renderer.setSize(w, h, false); camera.aspect = w/h; camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(canvas);
+const clock = new THREE.Clock(); let timerLeft = 30, timerAcc = 0;
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function updateOutlines(){
+  items.forEach(it=>{ if (!it.outline.visible) return; it.outline.children.forEach(om=>{ const s = om.userData.src; s.updateWorldMatrix(true,false); om.matrix.copy(s.matrixWorld); const sc = new THREE.Matrix4().makeScale(1.06,1.06,1.06); om.geometry.computeBoundingSphere(); const c = om.geometry.boundingSphere.center; const t1=new THREE.Matrix4().makeTranslation(c.x,c.y,c.z), t2=new THREE.Matrix4().makeTranslation(-c.x,-c.y,-c.z); om.matrix.multiply(t1).multiply(sc).multiply(t2); }); });
+}
+function loop(){
+  const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+  yaw += (tYaw - yaw) * Math.min(1, dt*8); pitch += (tPitch - pitch) * Math.min(1, dt*8);
+  const sway = reduce ? 0 : Math.sin(t*0.4)*0.25;
+  const yr = THREE.MathUtils.degToRad(yaw + sway), pr = THREE.MathUtils.degToRad(pitch + (reduce?0:Math.sin(t*0.53)*0.15));
+  camera.position.set(0, 1.6 + (reduce?0:Math.sin(t*1.2)*0.004), -0.4);
+  camera.lookAt(new THREE.Vector3(Math.sin(yr)*Math.cos(pr), Math.sin(pr), -Math.cos(yr)*Math.cos(pr)).add(camera.position));
+  // client idle
+  if (!reduce){ torso.scale.y = 1 + Math.sin(t*1.6)*0.012; belly.scale.z = 0.62 + Math.sin(t*1.6)*0.015; head.position.y = 1.72 + Math.sin(t*1.6)*0.004; head.rotation.y = Math.sin(t*0.35)*0.12; armL.rotation.x = Math.sin(t*0.9)*0.03; }
+  const blink = (t % 4.3) < 0.12; faceMesh.visible = true; head.scale.y = blink ? 0.985 : 1;
+  ledMat.color.set((Math.floor(t*1.6)%2) ? '#ff2a2a' : '#5a1010');
+  // flicker of tube in dorm
+  if (curLoc===0 && !reduce){ const f = (Math.sin(t*37)>0.995 || (t%7<0.08)) ? 0.6 : 1; tubeLight.intensity = LOCS[0].tubeI*f; tubeMat.emissiveIntensity = 1.4*f; }
+  // clock hands
+  handMin.parent.rotation.z = -t*0.05; handHr.rotation.z = -t*0.004;
+  // motes
+  const mp = motes.geometry.attributes.position; for (let i=0;i<mp.count;i++){ let y = mp.getY(i) + dt*0.02; if (y>2.9) y = 0.4; mp.setY(i, y); mp.setX(i, mp.getX(i) + Math.sin(t+i)*0.0004); } mp.needsUpdate = true;
+  // timer (cosmetic loop)
+  timerAcc += dt; if (timerAcc>=1){ timerAcc=0; timerLeft = timerLeft<=0 ? 30 : timerLeft-1; $('#timer').textContent = '0:' + String(timerLeft).padStart(2,'0'); }
+  updateOutlines();
+  renderer.render(scene, camera);
+  requestAnimationFrame(loop);
+}
+
+/* ================= PAGE UI ================= */
+// colour script cards
+$('#script').innerHTML = LOCS.map(L=>`
+  <div class="loc">
+    <div class="sw" style="background:linear-gradient(${L.wallHigh} 0 52%, ${L.wallLow} 52%)">
+      <span class="lamp" style="color:${L.lampColor}"></span>
+      <i style="background:repeating-linear-gradient(90deg, ${L.floor[0]} 0 22px, ${L.floor[1]} 22px 44px)"></i>
+      <span style="position:absolute;left:12px;bottom:46%;width:18px;height:18px;border-radius:5px;background:${L.accent};box-shadow:0 2px 6px rgba(0,0,0,.3)"></span>
+    </div>
+    <div class="tx"><h4>${L.name}</h4><p>${L.note}</p><div class="k">${L.wallLow} · ${L.accent}</div></div>
+  </div>`).join('');
+
+// device icons (inline SVG, 2px line style)
+const ICON = {
+  kettle:'<svg viewBox="0 0 64 48" fill="none" stroke="#2a2d33" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"><path d="M18 42h26l-3-26H21z" fill="#c9d4dc"/><path d="M21 16c0-6 20-6 20 0"/><path d="M44 20c6 0 8 4 8 9s-3 9-8 9"/><path d="M18 26l-7-6"/><rect x="14" y="42" width="34" height="4" rx="2" fill="#2a2d33"/></svg>',
+  micro:'<svg viewBox="0 0 64 48" fill="none" stroke="#2a2d33" stroke-width="2.4" stroke-linejoin="round"><rect x="6" y="8" width="52" height="32" rx="5" fill="#eef0ef"/><rect x="11" y="13" width="31" height="22" rx="3" fill="#2a2d33"/><circle cx="50" cy="18" r="2.5"/><circle cx="50" cy="26" r="2.5"/><rect x="46" y="31" width="8" height="4" rx="1" fill="#2f7d4f" stroke="none"/></svg>',
+  laptop:'<svg viewBox="0 0 64 48" fill="none" stroke="#2a2d33" stroke-width="2.4" stroke-linejoin="round"><rect x="13" y="8" width="38" height="25" rx="3" fill="#2a2d33"/><path d="M6 38h52l-4-5H10z" fill="#c9ccd0"/><path d="M20 14h16M20 19h22M20 24h12" stroke="#7d9bd6" stroke-width="2"/></svg>',
+};
+const ORDERS = [
+  {no:'0003', dev:'Чайник', who:'Борис', ico:'kettle', tier:'₽', sym:'Включается через раз, щёлкает кнопкой.', urg:null, omen:'Просит сделать подешевле'},
+  {no:'0004', dev:'Микроволновка', who:'Кирилл', ico:'micro', tier:'₽₽', sym:'Не запускается при закрытой дверце.', urg:'нужно починить сегодня', omen:null},
+  {no:'0005', dev:'Ноутбук', who:'Антон', ico:'laptop', tier:'₽₽₽', sym:'Сильно греется и выключается посреди пары.', urg:null, omen:'Пишет без ошибок, с терминами'},
+  {no:'0006', dev:'Микроволновка', who:'Виктор', ico:'micro', tier:'₽₽', sym:'Не включается совсем, даже часы не горят.', urg:null, omen:'Предупреждает: «Всё проверю, знаю свои права»', warn:true},
+  {no:'0007', dev:'Чайник', who:'Максим', ico:'kettle', tier:'₽', sym:'Не нагревается, хотя индикатор горит.', urg:'можно на этой неделе', omen:null},
+];
+$('#cards').innerHTML = ORDERS.map(o=>`
+  <article class="order" tabindex="0" aria-label="Заявка ${o.no}: ${o.dev}, клиент ${o.who}">
+    <span class="pin" aria-hidden="true"></span>
+    <span class="tier" aria-label="ценовая группа">${o.tier}</span>
+    <div class="no">заявка № ${o.no}</div>
+    <h5>${o.dev}</h5>
+    <div class="who">${o.who}</div>
+    <div class="ico">${ICON[o.ico]}</div>
+    <div class="sym">${o.sym}</div>
+    ${o.urg ? `<div class="urg">${o.urg}</div>` : ''}
+    ${o.omen ? `<div class="omen${o.warn?' warn':''}">${o.omen}</div>` : ''}
+  </article>`).join('');
+
+// dialogue
+const TONE = ['сквозь зубы','спокойно','с улыбкой'];
+const QUESTIONS = [
+  {q:'Когда вам нужно починить устройство?', a:'Сегодня нужно, без него никак.'},
+  {q:'Вы разбираетесь в этой технике?', a:'Почти нет, даже не знаю, с чего начать.'},
+  {q:'Это ваш ноутбук?', a:'Рабочий, мне его выдали на время.'},
+  {q:'Зачем вы записываете разговор?', a:'Хочу потом вспомнить, что вы сказали о ремонте.'},
+];
+const ICQ = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14"/><circle cx="12" cy="18" r=".6" fill="currentColor"/><circle cx="12" cy="12" r="9"/></svg>';
+let asked = 0;
+function renderQs(){
+  $('#qs').innerHTML = QUESTIONS.map((x,i)=> x.done ? '' : `<button type="button" data-q="${i}" ${asked>=2?'disabled':''}>${ICQ}${x.q}</button>`).join('');
+  $('#leftQ').textContent = asked>=2 ? 'вопросы закончились → диагностика' : 'осталось вопросов: ' + (2-asked);
+  document.querySelectorAll('#qs button').forEach(b=>b.addEventListener('click', ()=>ask(+b.dataset.q)));
+}
+function ask(i){
+  if (asked>=2) return; const x = QUESTIONS[i]; x.done = true; asked++;
+  const log = $('#log');
+  log.insertAdjacentHTML('beforeend', `<div class="q">${x.q}</div><div class="a"><span class="tone">${TONE[mood]}</span>${x.a}</div>`);
+  renderQs();
+}
+renderQs();
+document.querySelectorAll('.moods button').forEach(b=>b.addEventListener('click', ()=>setFace(+b.dataset.mood)));
+
+// price tape
+const P = 2500, slider = $('#slider');
+function upd(){
+  const m = +slider.value, pct = (m-0.75)/1.25*100;
+  $('#cursor').style.left = pct + '%';
+  $('#sum').textContent = fmt(P*m) + ' ₽';
+  $('#mult').textContent = '×' + m.toFixed(2).replace('.',',');
+}
+slider.addEventListener('input', upd); upd();
+$('#offer').addEventListener('click', ()=>{
+  const m = +slider.value; let tone = TONE[mood], line;
+  if (m <= 1) line = 'Договорились, чините.';
+  else if (m <= 1.3) line = 'Ну… ладно, если сегодня сделаете.';
+  else if (m <= 1.6){ line = 'Дорого, снизьте.'; setFace(Math.max(0, mood-1)); tone = TONE[mood]; }
+  else { line = 'Вы меня за дурака держите? Пишу на вас жалобу.'; setFace(0); tone = TONE[0]; }
+  $('#say').innerHTML = `<div class="bubble"><span class="tone">${tone}</span>${line}</div>`;
+});
+
+// receipt
+$('#print').addEventListener('click', ()=>{ const r = $('#receipt'); r.classList.remove('on'); void r.offsetWidth; requestAnimationFrame(()=>r.classList.add('on')); });
+setTimeout(()=>$('#receipt').classList.add('on'), 600);
+
+// stamp
+$('#restamp').addEventListener('click', ()=>{ const s = $('#bigstamp'), p = $('#protocol'); s.classList.remove('hit'); p.classList.remove('shake'); void s.offsetWidth; s.classList.add('hit'); p.classList.add('shake'); });
+
+// swatches
+const SW = [['Бумага','--paper'],['Графит','--graphite'],['Чернила','--ink'],['Штамп','--stamp'],['Стикер','--sticker'],['Успех','--ok']];
+$('#swatches').innerHTML = SW.map(([n,v])=>`<div><i style="background:var(${v})"></i>${n}</div>`).join('');
+
+// minigame: calibration
+(function(){
+  const c = $('#mini'), ctx = c.getContext('2d'), w = c.width, h = c.height;
+  let t0 = performance.now(), zone = 0.62, zw = 0.2, hitsN = 0, misses = 0, speed = 1/1.6, stopped = 0, timeLeft = 20, lastSec = performance.now();
+  const hitsEl = $('#hits');
+  function needle(now){ const ph = ((now - t0)/1000) * speed; return 0.5 + 0.5*Math.sin(ph*Math.PI*2); }
+  function draw(now){
+    ctx.clearRect(0,0,w,h);
+    // device face
+    ctx.fillStyle = '#e9ebe6'; roundRect(ctx, 30, 26, w-60, h-52, 26); ctx.fill();
+    ctx.fillStyle = '#d4d8d1'; roundRect(ctx, 30, h-90, w-60, 64, {bl:26, br:26, tl:0, tr:0}); ctx.fill();
+    ctx.fillStyle = '#2a2d33'; ctx.font = '800 26px Nunito, sans-serif'; ctx.fillText('ТЕРМОСТАТ', 62, 72);
+    ctx.font = '22px Neucha, cursive'; ctx.fillStyle = '#1e3c8c'; ctx.fillText('поймай стрелку в зелёной зоне ×3', 62, 104);
+    // screws
+    for (const [x,y] of [[52,48],[w-52,48],[52,h-48],[w-52,h-48]]){ ctx.fillStyle='#b9bcc2'; ctx.beginPath(); ctx.arc(x,y,9,0,Math.PI*2); ctx.fill(); ctx.strokeStyle='#6b6f76'; ctx.lineWidth=2.5; ctx.beginPath(); ctx.moveTo(x-5,y-5); ctx.lineTo(x+5,y+5); ctx.stroke(); }
+    // dial arc
+    const cx = w/2, cy = h*0.9, R = h*0.46, a0 = Math.PI*1.12, a1 = Math.PI*1.88;
+    ctx.lineCap='butt';
+    ctx.lineWidth = 34; ctx.strokeStyle = '#cfd4cc'; ctx.beginPath(); ctx.arc(cx,cy,R,a0,a1); ctx.stroke();
+    const za = a0 + (a1-a0)*(zone - zw/2), zb = a0 + (a1-a0)*(zone + zw/2);
+    ctx.strokeStyle = '#2f7d4f'; ctx.beginPath(); ctx.arc(cx,cy,R,za,zb); ctx.stroke();
+    ctx.lineWidth = 3; ctx.strokeStyle = '#2a2d33';
+    for (let i=0;i<=20;i++){ const a = a0+(a1-a0)*i/20, r1 = R+20, r2 = R + (i%5? 28 : 36); ctx.beginPath(); ctx.moveTo(cx+Math.cos(a)*r1, cy+Math.sin(a)*r1); ctx.lineTo(cx+Math.cos(a)*r2, cy+Math.sin(a)*r2); ctx.stroke(); }
+    ctx.font='700 16px "PT Mono", monospace'; ctx.fillStyle='#2a2d33'; ctx.textAlign='center';
+    ['−5','0','+5'].forEach((s,i)=>{ const a=a0+(a1-a0)*i/2; ctx.fillText(s, cx+Math.cos(a)*(R+52), cy+Math.sin(a)*(R+52)+6); }); ctx.textAlign='left';
+    // needle
+    const v = stopped ? stopped : needle(now), na = a0 + (a1-a0)*v;
+    ctx.strokeStyle = '#a3294a'; ctx.lineWidth = 6; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.cos(na)*(R+14), cy+Math.sin(na)*(R+14)); ctx.stroke();
+    ctx.fillStyle = '#2a2d33'; ctx.beginPath(); ctx.arc(cx,cy,16,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#e9ebe6'; ctx.beginPath(); ctx.arc(cx,cy,5,0,Math.PI*2); ctx.fill();
+  }
+  function roundRect(ctx,x,y,w,h,r){ if (typeof r==='number') r={tl:r,tr:r,br:r,bl:r}; ctx.beginPath(); ctx.moveTo(x+r.tl,y); ctx.lineTo(x+w-r.tr,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r.tr); ctx.lineTo(x+w,y+h-r.br); ctx.quadraticCurveTo(x+w,y+h,x+w-r.br,y+h); ctx.lineTo(x+r.bl,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r.bl); ctx.lineTo(x,y+r.tl); ctx.quadraticCurveTo(x,y,x+r.tl,y); ctx.closePath(); }
+  function renderHits(){ hitsEl.innerHTML = [0,1,2].map(i=> i<hitsN ? '<i class="ok">✓</i>' : '<i></i>').join('') + (misses? Array.from({length:misses},()=>'<i class="bad">✕</i>').join('') : ''); }
+  function stop(){
+    if (stopped) return; const v = needle(performance.now()); stopped = v;
+    const ok = Math.abs(v - zone) <= zw/2; if (ok) hitsN++; else misses++;
+    renderHits();
+    setTimeout(()=>{ stopped = 0; if (hitsN>=3 || misses>=3){ hitsN=0; misses=0; timeLeft=20; speed=1/1.6; } else if (ok){ zone = 0.2 + Math.random()*0.6; speed *= 1.15; } renderHits(); }, 650);
+  }
+  $('#stop').addEventListener('click', stop);
+  c.addEventListener('pointerdown', stop);
+  window.addEventListener('keydown', e=>{ if (e.code==='Space' && document.activeElement && !/INPUT|BUTTON|TEXTAREA/.test(document.activeElement.tagName)){ const r = c.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0){ e.preventDefault(); stop(); } } });
+  function frame(now){ if (now - lastSec > 1000){ lastSec = now; timeLeft = timeLeft<=0 ? 20 : timeLeft-1; $('#mtime').textContent = String(timeLeft).padStart(2,'0'); } draw(now); requestAnimationFrame(frame); }
+  renderHits(); requestAnimationFrame(frame);
+})();
+
+room.rotation.y = Math.PI;
+setFace(1); applyLoc(0); resize(); requestAnimationFrame(loop);
+}
+</script>
