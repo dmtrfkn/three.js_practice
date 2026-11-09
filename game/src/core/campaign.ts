@@ -3,7 +3,7 @@
 import { PARAMS, LOCATIONS, type Level, type Tier } from './params';
 import { makeRng, next, chance, weighted, shuffle } from './rng';
 import {
-  DEVICES, CLIENT_NAMES, RELIABLE, AMBIGUOUS, SUSPICIOUS, NEUTRALS, PRESETS, BASE_QUESTIONS, NEUTRAL_ANSWER, LINES, ALL_ITEMS,
+  DEVICES, CLIENT_NAMES, RELIABLE, AMBIGUOUS, SUSPICIOUS, NEUTRALS, PRESETS, BASE_QUESTIONS, NEUTRAL_ANSWER, LINES, ALL_ITEMS, ASK_ABOUT,
   type Phrase, type Category,
 } from './content';
 import type { Campaign, Offer, Order, RoomItem, Reaction, ClientTraits } from './types';
@@ -17,7 +17,7 @@ export function newCampaign(seed = Math.floor(Math.random() * 2 ** 31)): Campaig
   const c: Campaign = {
     version: 1, seed, rng: makeRng(seed), locIdx: 0, money: PARAMS.startMoney, rep: PARAMS.startRep, violations: 0,
     callIndex: 0, callsUsed: 0, orderCounter: 0, offers: [], order: null, inspectorBonus: 0, status: 'board', ending: null,
-    history: [], locationStartMoney: PARAMS.startMoney, tutorialSeen: false,
+    history: [], locationStartMoney: PARAMS.startMoney, tutorialSeen: false, tutorialStep: 0,
   };
   generateOffers(c);
   return c;
@@ -144,16 +144,16 @@ export function toDialogue(c: Campaign): void {
 
 /* ---------------- диалог ---------------- */
 
-export interface QuestionView { id: string; text: string }
+export interface QuestionView { id: string; text: string; label: string }
 
 export function availableQuestions(o: Order): QuestionView[] {
   const list: QuestionView[] = [
-    { id: 'base_urgency', text: BASE_QUESTIONS.urgency.q },
-    { id: 'base_knowledge', text: BASE_QUESTIONS.knowledge.q },
+    { id: 'base_urgency', text: BASE_QUESTIONS.urgency.q, label: 'Спросить про ' + ASK_ABOUT.base_urgency },
+    { id: 'base_knowledge', text: BASE_QUESTIONS.knowledge.q, label: 'Спросить про ' + ASK_ABOUT.base_knowledge },
   ];
   for (const id of o.inspected) {
     const it = ALL_ITEMS[id];
-    list.push({ id, text: it ? it.question : 'Что это?' });
+    list.push({ id, text: it ? it.question : 'А это у вас что?', label: 'Спросить про ' + (ASK_ABOUT[id] ?? 'этот предмет') });
   }
   return list.filter((q) => !o.asked.includes(q.id));
 }

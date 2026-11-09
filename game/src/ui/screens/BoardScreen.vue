@@ -26,7 +26,7 @@ function choose(id: string) { if (st.value.callsLeft <= 0) return; sfx('pin'); s
 </script>
 
 <template>
-  <div class="board layer">
+  <div class="board layer scroll">
     <div class="hud">
       <div>
         <span class="chip"><span v-html="ICON.money" /><b :class="{ neg: c.money < 0 }">{{ rub(c.money) }}</b></span>
@@ -83,19 +83,6 @@ function choose(id: string) { if (st.value.callsLeft <= 0) return; sfx('pin'); s
           </div>
         </div>
         <div v-if="st.canMove" class="move-note sticky">Вы уже сейчас можете переехать!</div>
-      </div>
-    </div>
-
-    <div v-if="!c.tutorialSeen" class="modal-bg">
-      <div class="paper modal tut" role="dialog" aria-modal="true">
-        <h3>Первый день</h3>
-        <ol>
-          <li><b>Выберите заявку.</b> Точная цена ремонта станет известна после диагностики.</li>
-          <li><b>Осмотрите комнату за 30 секунд.</b> Предметы подсказывают, сколько у клиента денег, насколько он разбирается в технике и спешит ли.</li>
-          <li><b>Задайте два вопроса</b> и назначьте цену. По прайсу соглашаются всегда — сверху рискованно.</li>
-        </ol>
-        <p class="lbl">Первый вызов спокойный: проверяющих здесь не будет.</p>
-        <div class="row" style="justify-content:flex-end"><button class="btn" type="button" @click="act.markTutorial()">Понятно</button></div>
       </div>
     </div>
 

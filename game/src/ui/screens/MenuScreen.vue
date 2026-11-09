@@ -11,7 +11,7 @@ function start() { sfx('click'); if (canContinue.value) confirmNew.value = true;
 </script>
 
 <template>
-  <div class="menu layer">
+  <div class="menu layer scroll">
     <section class="title-sheet paper">
       <div class="logo-row">
         <div class="logo-mark" aria-hidden="true" v-html="ICON.wrench" />

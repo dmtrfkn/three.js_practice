@@ -23,7 +23,7 @@ onMounted(() => sfx(win.value ? 'success' : 'stamp'));
 </script>
 
 <template>
-  <div class="layer end">
+  <div class="layer end scroll">
     <div class="paper sheet" :class="{ win }">
       <div class="big-stamp" :class="{ ok: win }" style="right:34px;bottom:96px">{{ win ? 'ОТКРЫТО' : c.ending === 'arrest' ? 'АРЕСТ' : 'ЗАКРЫТО' }}</div>
       <div class="lbl">Итог кампании</div>

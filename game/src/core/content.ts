@@ -125,8 +125,8 @@ export const RELIABLE: ItemDef[] = [
 ];
 
 export const AMBIGUOUS: ItemDef[] = [
-  { id: 'AMB_LAPTOP', kind: 'ambiguous', location: 'dorm', ambKey: 'budget', title: 'Дорогой ноутбук', card: 'Дорогой ноутбук.', question: 'Это ваш ноутбук?', answerHigh: { conv: 'Да, это мой личный ноутбук.', formal: 'Да, этот ноутбук принадлежит мне.' }, answerOther: { conv: 'Рабочий; мне его выдали на время.', formal: 'Это рабочий ноутбук, предоставленный мне во временное пользование.' } },
-  { id: 'AMB_TVBOX', kind: 'ambiguous', location: 'khr', ambKey: 'budget', title: 'Коробка от телевизора', card: 'Коробка от дорогого телевизора.', question: 'Недавно купили телевизор?', answerHigh: { conv: 'Да, купил себе.', formal: 'Да, я приобрёл этот телевизор для себя.' }, answerOther: { conv: 'Помогал родственнику с покупкой; коробку оставил у себя.', formal: 'Я помог родственнику приобрести телевизор; упаковка осталась у меня.' } },
+  { id: 'AMB_LAPTOP', kind: 'ambiguous', location: 'dorm', ambKey: 'budget', title: 'Дорогой ноутбук', card: 'Дорогой ноутбук.', question: 'Это ваш ноутбук?', answerHigh: { conv: 'Да, это мой личный ноутбук.', formal: 'Да, этот ноутбук принадлежит мне.' }, answerOther: { conv: 'Не, он рабочий, мне его на время выдали.', formal: 'Это рабочий ноутбук, предоставленный мне во временное пользование.' } },
+  { id: 'AMB_TVBOX', kind: 'ambiguous', location: 'khr', ambKey: 'budget', title: 'Коробка от телевизора', card: 'Коробка от дорогого телевизора.', question: 'Недавно купили телевизор?', answerHigh: { conv: 'Да, купил себе.', formal: 'Да, я приобрёл этот телевизор для себя.' }, answerOther: { conv: 'Это брат себе брал, а коробку я забрал — пригодится.', formal: 'Я помог родственнику приобрести телевизор; упаковка осталась у меня.' } },
   { id: 'AMB_LAMP', kind: 'ambiguous', location: 'new', ambKey: 'budget', title: 'Дизайнерская лампа', card: 'Дорогая дизайнерская лампа.', question: 'Это ваша лампа?', answerHigh: { conv: 'Да, купил её для этой квартиры.', formal: 'Да, я приобрёл эту лампу для своей квартиры.' }, answerOther: { conv: 'Она была здесь при аренде квартиры.', formal: 'Лампа уже находилась здесь, когда я арендовал квартиру.' } },
   { id: 'AMB_CUP', kind: 'ambiguous', location: 'elite', ambKey: 'budget', title: 'Кубок клуба', card: 'Кубок с эмблемой частного клуба.', question: 'Вы состоите в этом клубе?', answerHigh: { conv: 'Да, это мой кубок из клуба.', formal: 'Да, этот кубок принадлежит мне; я состою в клубе.' }, answerOther: { conv: 'Кубок мне поручили передать владельцу.', formal: 'Меня попросили передать этот кубок его владельцу.' } },
   { id: 'AMB_AWARD', kind: 'ambiguous', location: 'office', ambKey: 'knowledge', title: 'Награда за проект', card: 'Награда за технический проект.', question: 'Это ваша награда?', answerHigh: { conv: 'Да, это награда за мой проект.', formal: 'Да, награду вручили за разработанный мной проект.' }, answerOther: { conv: 'Она принадлежит команде компании.', formal: 'Эта награда принадлежит команде компании, а не лично мне.' } },
@@ -135,31 +135,31 @@ export const AMBIGUOUS: ItemDef[] = [
 export const SUSPICIOUS: ItemDef[] = [
   { id: 'SUS_RECORDER', kind: 'suspicious', title: 'Диктофон', card: 'Диктофон с горящим индикатором записи.', question: 'Зачем вы записываете разговор?', susAnswers: { conv: 'Хочу потом вспомнить, что вы сказали о ремонте.', formal: ['Я хотел бы сохранить ваши объяснения, чтобы позже к ним вернуться.', 'Я хотел бы сохранить точную запись нашего разговора о ремонте.'] } },
   { id: 'SUS_PHONE', kind: 'suspicious', title: 'Телефон на подставке', card: 'Телефон на подставке. На экране открыта камера.', question: 'Вы собираетесь снимать ремонт?', susAnswers: { conv: 'Да, хочу показать семье, что было неисправно.', formal: ['Да, я хотел бы показать семье запись ремонта.', 'Да, я хотел бы сохранить запись того, как проходил ремонт.'] } },
-  { id: 'SUS_FOLDER', kind: 'suspicious', title: 'Папка с бланками', card: 'Папка с бланками и ручкой.', question: 'Что это за бланки?', susAnswers: { conv: 'Записываю домашние расходы; бланки остались после работы.', formal: ['Я записываю домашние расходы; эти бланки остались у меня после работы.', 'Я хотел бы записать условия ремонта и итоговую сумму.'] } },
+  { id: 'SUS_FOLDER', kind: 'suspicious', title: 'Папка с бланками', card: 'Папка с бланками и ручкой.', question: 'Что это за бланки?', susAnswers: { conv: 'Расходы записываю, а бланки с работы остались.', formal: ['Я записываю домашние расходы; эти бланки остались у меня после работы.', 'Я хотел бы записать условия ремонта и итоговую сумму.'] } },
 ];
 
-export interface NeutralDef { id: string; name: string; nameAcc: string }
+export interface NeutralDef { id: string; name: string; nameAcc: string; gender?: 'm' | 'f' | 'n' | 'pl' }
 export const NEUTRALS: Record<string, NeutralDef> = {
-  mug: { id: 'mug', name: 'Кружка', nameAcc: 'кружка' },
-  spoon: { id: 'spoon', name: 'Ложка', nameAcc: 'ложка' },
-  notebook: { id: 'notebook', name: 'Блокнот', nameAcc: 'блокнот' },
-  pillow: { id: 'pillow', name: 'Подушка', nameAcc: 'подушка' },
-  plant: { id: 'plant', name: 'Растение', nameAcc: 'растение' },
-  napkins: { id: 'napkins', name: 'Салфетница', nameAcc: 'салфетница' },
-  newspaper: { id: 'newspaper', name: 'Газета', nameAcc: 'газета' },
-  deskclock: { id: 'deskclock', name: 'Настольные часы', nameAcc: 'настольные часы' },
-  movebox: { id: 'movebox', name: 'Коробка переезда', nameAcc: 'коробка переезда' },
-  towel_k: { id: 'towel_k', name: 'Кухонное полотенце', nameAcc: 'кухонное полотенце' },
-  plaid: { id: 'plaid', name: 'Плед', nameAcc: 'плед' },
-  mousepad: { id: 'mousepad', name: 'Коврик для мыши', nameAcc: 'коврик для мыши' },
-  vase: { id: 'vase', name: 'Ваза', nameAcc: 'ваза' },
-  cushion: { id: 'cushion', name: 'Декоративная подушка', nameAcc: 'декоративная подушка' },
-  magazine: { id: 'magazine', name: 'Спортивный журнал', nameAcc: 'спортивный журнал' },
-  towel: { id: 'towel', name: 'Полотенце', nameAcc: 'полотенце' },
-  pens: { id: 'pens', name: 'Стакан с ручками', nameAcc: 'стакан с ручками' },
-  water: { id: 'water', name: 'Бутылка воды', nameAcc: 'бутылка воды' },
-  deptfolder: { id: 'deptfolder', name: 'Папка с названием отдела', nameAcc: 'папка с названием отдела' },
-  paperbin: { id: 'paperbin', name: 'Корзина для бумаг', nameAcc: 'корзина для бумаг' },
+  mug: { id: 'mug', name: 'Кружка', nameAcc: 'кружка', gender: 'f' },
+  spoon: { id: 'spoon', name: 'Ложка', nameAcc: 'ложка', gender: 'f' },
+  notebook: { id: 'notebook', name: 'Блокнот', nameAcc: 'блокнот', gender: 'm' },
+  pillow: { id: 'pillow', name: 'Подушка', nameAcc: 'подушка', gender: 'f' },
+  plant: { id: 'plant', name: 'Растение', nameAcc: 'растение', gender: 'n' },
+  napkins: { id: 'napkins', name: 'Салфетница', nameAcc: 'салфетница', gender: 'f' },
+  newspaper: { id: 'newspaper', name: 'Газета', nameAcc: 'газета', gender: 'f' },
+  deskclock: { id: 'deskclock', name: 'Настольные часы', nameAcc: 'настольные часы', gender: 'pl' },
+  movebox: { id: 'movebox', name: 'Коробка переезда', nameAcc: 'коробка переезда', gender: 'f' },
+  towel_k: { id: 'towel_k', name: 'Кухонное полотенце', nameAcc: 'кухонное полотенце', gender: 'n' },
+  plaid: { id: 'plaid', name: 'Плед', nameAcc: 'плед', gender: 'm' },
+  mousepad: { id: 'mousepad', name: 'Коврик для мыши', nameAcc: 'коврик для мыши', gender: 'm' },
+  vase: { id: 'vase', name: 'Ваза', nameAcc: 'ваза', gender: 'f' },
+  cushion: { id: 'cushion', name: 'Декоративная подушка', nameAcc: 'декоративная подушка', gender: 'f' },
+  magazine: { id: 'magazine', name: 'Спортивный журнал', nameAcc: 'спортивный журнал', gender: 'm' },
+  towel: { id: 'towel', name: 'Полотенце', nameAcc: 'полотенце', gender: 'n' },
+  pens: { id: 'pens', name: 'Стакан с ручками', nameAcc: 'стакан с ручками', gender: 'm' },
+  water: { id: 'water', name: 'Бутылка воды', nameAcc: 'бутылка воды', gender: 'f' },
+  deptfolder: { id: 'deptfolder', name: 'Папка с названием отдела', nameAcc: 'папка с названием отдела', gender: 'f' },
+  paperbin: { id: 'paperbin', name: 'Корзина для бумаг', nameAcc: 'корзина для бумаг', gender: 'f' },
 };
 
 export interface PresetDef { id: string; name: string; neutrals: [string, string] }
@@ -193,9 +193,21 @@ export const BASE_QUESTIONS = {
 };
 
 export const NEUTRAL_ANSWER = (n: NeutralDef): Phrase => ({
-  conv: `Это просто ${n.nameAcc}, к ремонту не относится.`,
-  formal: `Это ${n.nameAcc}; данный предмет не связан с ремонтом.`,
+  conv: `Да это просто ${n.nameAcc}, к ремонту отношения не имеет.`,
+  formal: `Это ${n.nameAcc}, к ремонту она не относится.`.replace(' она ', ' ' + (n.gender === 'f' ? 'она' : n.gender === 'n' ? 'оно' : n.gender === 'pl' ? 'они' : 'он') + ' ').replace('они не относится', 'они не относятся'),
 });
+
+/** Как предмет называется в кнопке «Спросить про …» (винительный падеж). */
+export const ASK_ABOUT: Record<string, string> = {
+  B_LOW: 'конверт с купонами', B_MID: 'папку с планом покупок', B_HIGH: 'чек за технику', K_LOW: 'распечатку инструкции', K_MID: 'руководство с закладками',
+  K_HIGH: 'мультиметр', U_LOW: 'стикер «можно позже»', U_MID: 'календарь', U_HIGH: 'стикер «нужно сегодня»',
+  AMB_LAPTOP: 'дорогой ноутбук', AMB_TVBOX: 'коробку от телевизора', AMB_LAMP: 'дизайнерскую лампу', AMB_CUP: 'кубок клуба', AMB_AWARD: 'награду за проект',
+  SUS_RECORDER: 'диктофон', SUS_PHONE: 'телефон на подставке', SUS_FOLDER: 'папку с бланками',
+  mug: 'кружку', spoon: 'ложку', notebook: 'блокнот', pillow: 'подушку', plant: 'растение', napkins: 'салфетницу', newspaper: 'газету', deskclock: 'настольные часы',
+  movebox: 'коробку переезда', towel_k: 'кухонное полотенце', plaid: 'плед', mousepad: 'коврик для мыши', vase: 'вазу', cushion: 'декоративную подушку',
+  magazine: 'спортивный журнал', towel: 'полотенце', pens: 'стакан с ручками', water: 'бутылку воды', deptfolder: 'папку отдела', paperbin: 'корзину для бумаг',
+  base_urgency: 'сроки ремонта', base_knowledge: 'опыт с техникой',
+};
 
 export const LINES = {
   accept: { conv: 'Договорились, чините.', formal: 'Меня устраивает эта сумма. Приступайте, пожалуйста.' },

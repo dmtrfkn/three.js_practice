@@ -80,6 +80,12 @@ export const act = {
   move() { core.moveNext(g()); ui.confirmMove = false; sfx('truck'); persist(); },
   workshop() { core.openWorkshop(g()); persist(); },
   markTutorial() { g().tutorialSeen = true; persist(); },
+  tutorialStep(i: number) { g().tutorialStep = i; persist(); },
+  skipTutorial() {
+    const c = g(); c.tutorialSeen = true;
+    if (c.order?.stage === 'inspect' && c.order.inspectEndsAt === null) core.startInspection(c, Date.now());
+    persist();
+  },
 };
 
 // для автотестов и отладки

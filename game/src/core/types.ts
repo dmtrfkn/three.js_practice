@@ -122,4 +122,6 @@ export interface Campaign {
   history: OrderSummary[];
   locationStartMoney: number;
   tutorialSeen: boolean;
+  /** номер текущего шага обучения (первый заказ кампании) */
+  tutorialStep?: number;
 }

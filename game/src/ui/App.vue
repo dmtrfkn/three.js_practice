@@ -17,6 +17,8 @@ import MoveScreen from './screens/MoveScreen.vue';
 import EndScreen from './screens/EndScreen.vue';
 import TopHud from './components/TopHud.vue';
 import SettingsModal from './components/SettingsModal.vue';
+import TutorialCoach from './components/TutorialCoach.vue';
+import { phaseOf } from './tutorial';
 
 const canvas = ref<HTMLCanvasElement | null>(null);
 let scene: RoomScene | null = null;
@@ -47,7 +49,7 @@ watch(() => (inOrder.value ? order.value!.offerId : null), async (id) => {
   scene.setCamera(0, -4);
   startAmbient(LOCATIONS[order.value!.locIdx].id);
   sceneReady.value = true;
-  if (order.value!.stage === 'inspect') act.startInspection();
+  if (order.value!.stage === 'inspect' && phaseOf(c.value) === 'off') act.startInspection();
   applyStage();
 }, { immediate: true });
 
@@ -153,6 +155,7 @@ void toast;
       Удобнее держать телефон горизонтально
       <button type="button" aria-label="Скрыть подсказку" @click="closeRotate">✕</button>
     </div>
+    <TutorialCoach v-if="ui.screen === 'game' && c && (!inOrder || sceneReady)" :scene="scene" />
     <SettingsModal v-if="ui.settingsOpen" />
     <div v-if="ui.toast" class="toast chip dark" role="status">{{ ui.toast }}</div>
   </div>

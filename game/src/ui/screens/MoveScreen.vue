@@ -15,7 +15,7 @@ const fines = computed(() => rows.value.reduce((a, h) => a + h.fine, 0));
 </script>
 
 <template>
-  <div class="layer move">
+  <div class="layer move scroll">
     <div class="paper ledger">
       <div class="spread"><h2>Итоги: {{ loc.name }}</h2><span class="hand quota">квота {{ rub(loc.quota) }} выполнена</span></div>
       <table>

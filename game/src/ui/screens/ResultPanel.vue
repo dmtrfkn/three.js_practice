@@ -113,7 +113,7 @@ void ui; void LOCATIONS;
 .lines { display: grid; gap: 2px; margin-top: 10px; }
 .l { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px dotted #aab2b8; }
 .neg { color: var(--stamp); } .pos { color: var(--ok); }
-.desk-row { position: absolute; inset: 70px 16px 90px; display: flex; gap: 26px; justify-content: center; align-items: flex-start; overflow: auto; }
+.desk-row { position: absolute; inset: 70px 16px 90px; display: flex; gap: 26px; justify-content: center; align-items: flex-start; overflow: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; overscroll-behavior: contain; }
 .receipt-col { display: flex; flex-direction: column; align-items: center; width: 300px; flex: none; }
 .printer { width: 100%; height: 30px; border-radius: 12px 12px 4px 4px; background: linear-gradient(#3b4049, #2a2e35); box-shadow: inset 0 -6px 0 #1b1e23, 0 8px 18px rgba(0,0,0,.35); position: relative; z-index: 1; }
 .printer::after { content: ""; position: absolute; left: 24px; right: 24px; bottom: 4px; height: 5px; border-radius: 3px; background: #101215; }

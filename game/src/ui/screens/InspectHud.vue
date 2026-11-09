@@ -40,7 +40,7 @@ function focusItem(id: string) { props.scene?.lookAtItem(id); props.scene?.highl
 <template>
   <div class="layer">
     <div class="timer chip dark" :class="{ urgent }" role="timer" aria-live="off">
-      <span v-html="ICON.timer" />осмотр <b>0:{{ String(secs).padStart(2, '0') }}</b>
+      <span v-html="ICON.timer" />осмотр <b v-if="o.inspectEndsAt !== null">0:{{ String(secs).padStart(2, '0') }}</b><b v-else>без таймера</b>
     </div>
     <div class="hint-line">{{ hint }}</div>
     <div class="actions">

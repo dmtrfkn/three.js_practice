@@ -8,6 +8,8 @@ import { rub, mult } from '../format';
 import Portrait from '../components/Portrait.vue';
 import { LOCATIONS } from '../../core/params';
 import type { RoomScene } from '../../scene/RoomScene';
+import { phaseOf, STEP_LIMITS } from '../tutorial';
+import { noticeChance } from '../../core/rules';
 
 const props = defineProps<{ scene: RoomScene | null }>();
 const o = computed(() => game.value!.order!);
@@ -23,6 +25,30 @@ const ticks = computed(() => { const a: number[] = []; for (let x = PARAMS.slide
 const reaction = computed(() => (second.value && ui.lastReaction ? ui.lastReaction : null));
 const app = computed(() => props.scene?.appearance ?? null);
 const locId = computed(() => LOCATIONS[o.value.locIdx].id);
+// шпаргалка обучения: скрытые характеристики клиента и прогноз реакции
+const tut = computed(() => phaseOf(game.value) !== 'off');
+const cheat = computed(() => {
+  const cl = o.value.client, mood = o.value.mood;
+  const base = PARAMS.budgetBase[cl.budget], dm = PARAMS.moodDelta[mood], du = cl.urgency === 2 ? PARAMS.urgencyHighDelta : 0;
+  const L = base + dm + du;
+  const notice = Math.round(noticeChance(m.value, cl.knowledge) * 100);
+  let verdict: string, tone: 'ok' | 'warn' | 'bad';
+  if (second.value) {
+    const C = (o.value.ceilingC ?? 0) / o.value.P;
+    if (m.value <= C + 1e-9) { verdict = `Согласится: второе предложение он примет до ×${C.toFixed(2).replace('.', ',')}.`; tone = 'ok'; }
+    else { verdict = `Уйдёт: второе предложение он примет только до ×${C.toFixed(2).replace('.', ',')}.`; tone = 'bad'; }
+  } else if (m.value <= 1 + 1e-9) { verdict = 'Согласится наверняка: цена не выше рыночной.'; tone = 'ok'; }
+  else if (m.value > L + 1e-9) { verdict = `Попросит снизить: цена выше его предела ×${L.toFixed(2).replace('.', ',')}.`; tone = 'bad'; }
+  else if (m.value <= PARAMS.noticeFreeUpTo + 1e-9) { verdict = 'Согласится: цена в пределах, а наценку до ×1,20 никто не замечает.'; tone = 'ok'; }
+  else { verdict = `Согласится, если не заметит наценку. Заметит с шансом ${notice} % — тогда попросит снизить${cl.scandal && m.value >= PARAMS.scandalTriggerMult ? ', а этот клиент скандальный — уйдёт с жалобой' : ''}.`; tone = 'warn'; }
+  return { rows: [
+    ['Бюджет', `${STEP_LIMITS.budget[cl.budget]} → предел ×${base.toFixed(2).replace('.', ',')}`],
+    ['Настроение', `${STEP_LIMITS.mood[mood]} → ${dm > 0 ? '+' : dm < 0 ? '−' : '±'}${Math.abs(dm).toFixed(2).replace('.', ',')}`],
+    ['Срочность', `${STEP_LIMITS.urgency[cl.urgency]} → ${du ? '+0,10' : '±0'}`],
+    ['Знание техники', `${STEP_LIMITS.knowledge[cl.knowledge]} → заметит ×${m.value.toFixed(2).replace('.', ',')} с шансом ${notice} %`],
+  ], L, verdict, tone };
+});
+
 function offer() { if (!canOffer.value) return; act.propose(m.value); }
 function onInput(e: Event) { const v = +(e.target as HTMLInputElement).value; m.value = Math.min(v, maxM.value); (e.target as HTMLInputElement).value = String(m.value); }
 </script>
@@ -55,6 +81,13 @@ function onInput(e: Event) { const v = +(e.target as HTMLInputElement).value; m.
         </div>
       </div>
       <div class="lbl">← → меняют цену на один шаг{{ second ? ' · второе предложение должно быть ниже первого' : '' }}</div>
+
+      <div v-if="tut" class="tut-cheat">
+        <div class="cheat-title">Шпаргалка обучения · скрытое от игрока</div>
+        <div v-for="r in cheat.rows" :key="r[0]" class="cheat-row"><span>{{ r[0] }}</span><b>{{ r[1] }}</b></div>
+        <div class="cheat-row total"><span>Предел клиента</span><b>×{{ cheat.L.toFixed(2).replace('.', ',') }} = {{ rub(o.P * cheat.L) }}</b></div>
+        <div class="verdict" :class="cheat.tone">{{ cheat.verdict }}</div>
+      </div>
 
       <div class="row" style="margin-top:14px;justify-content:space-between">
         <span class="lbl" v-if="second">Это последняя попытка: при отказе клиент уйдёт.</span>
@@ -89,5 +122,14 @@ function onInput(e: Event) { const v = +(e.target as HTMLInputElement).value; m.
 .cursor::before { content: ""; position: absolute; left: -2px; top: 0; bottom: 0; width: 4px; background: var(--stamp); }
 .cursor::after { content: ""; position: absolute; left: -10px; top: -2px; border: 10px solid transparent; border-top-color: var(--stamp); }
 @media (max-width: 720px), (max-height: 520px) { .tape { height: 66px; } .tape-wrap { margin: 12px 0 6px; } .sum-row { margin-top: 6px; } }
+.tut-cheat { margin-top: 12px; border: 2px dashed var(--sticker-edge); background: rgba(241,208,75,.16); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; }
+.cheat-title { font: 900 11px var(--f-main); letter-spacing: .06em; text-transform: uppercase; color: #7a6416; margin-bottom: 6px; }
+.cheat-row { display: flex; justify-content: space-between; gap: 10px; padding: 2px 0; }
+.cheat-row b { text-align: right; font-weight: 700; }
+.cheat-row.total { border-top: 1px dotted #b9a24a; margin-top: 4px; padding-top: 5px; }
+.verdict { margin-top: 8px; font-weight: 800; padding: 6px 8px; border-radius: 8px; }
+.verdict.ok { background: rgba(47,125,79,.14); color: #1d5233; }
+.verdict.warn { background: rgba(241,208,75,.35); color: #5a4a08; }
+.verdict.bad { background: rgba(163,41,74,.14); color: var(--stamp-dark); }
 input[type=range] { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: ew-resize; }
 </style>

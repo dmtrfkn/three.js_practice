@@ -11,8 +11,8 @@ const shot = async (n) => { await p.waitForTimeout(600); await p.screenshot({ pa
 await p.goto(url); await p.evaluate(() => localStorage.clear()); await p.reload();
 await p.waitForSelector('text=Новая игра'); await shot('01_menu');
 if (seedArg) await p.evaluate((s) => window.__game.newGame(+s), seedArg); else await p.click('text=Новая игра');
-await p.waitForSelector('text=Первый день'); await shot('02_tutorial');
-await p.click('text=Понятно'); await shot('03_board');
+await p.waitForSelector('text=Пропустить обучение'); await shot('02_tutorial');
+await p.click('text=Пропустить обучение'); await shot('03_board');
 await p.locator('article.order').nth(2).click(); await shot('04_confirm');
 await p.click('button:has-text("Поехать")');
 await p.waitForFunction(() => window.__game.game.value?.order?.inspectEndsAt != null, null, { timeout: 20000 });

@@ -12,7 +12,7 @@ for (const [tag, vp] of [['p', { width: 390, height: 844 }], ['l', { width: 844,
   const shot = async (n, w = 700) => { await p.waitForTimeout(w); await p.screenshot({ path: `${out}/m${tag}_${n}.png` }); };
   await p.goto(url); await p.evaluate(() => localStorage.clear()); await p.reload();
   await p.waitForSelector('text=Новая игра'); await shot('01_menu');
-  await p.click('text=Новая игра'); await p.waitForSelector('text=Понятно'); await p.click('text=Понятно'); await shot('02_board');
+  await p.click('text=Новая игра'); await p.waitForSelector('text=Пропустить обучение'); await p.click('text=Пропустить обучение'); await shot('02_board');
   await p.locator('article.order').nth(2).click(); await p.click('button:has-text("Поехать")');
   await p.waitForFunction(() => window.__game.game.value?.order?.inspectEndsAt != null); await shot('03_inspect', 1500);
   // тап по видимому предмету
