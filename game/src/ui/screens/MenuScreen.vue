@@ -26,7 +26,6 @@ function start() { sfx('click'); if (canContinue.value) confirmNew.value = true;
         <button class="btn big" :class="{ ghost: canContinue }" type="button" @click="start">Новая игра</button>
         <button class="btn ghost" type="button" @click="sfx('click'); ui.settingsOpen = true"><span v-html="ICON.gear" />Настройки</button>
       </div>
-      <div class="stamp-corner stamp-mark">курсовой проект · 2026</div>
     </section>
 
     <aside class="route">
