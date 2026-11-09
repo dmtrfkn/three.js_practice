@@ -16,7 +16,7 @@ export function dimsFor(locId: string): Dims {
 }
 /** Игровые точки (ГДД «Генерация комнаты»), подобранные под размер каждой комнаты. Ось X зеркальна ГДД. */
 const ANCHORS: Record<string, { device: [number, number]; client: [number, number]; slots: [number, number][]; tableW: number }> = {
-  dorm:   { device: [0, 2.8], client: [-1.5, 2.55], slots: [[1.7, 1.75], [0.65, 2.0], [-0.65, 2.0], [-1.7, 1.75]], tableW: 0.9 },
+  dorm:   { device: [0, 2.8], client: [-1.75, 2.28], slots: [[1.7, 1.75], [0.65, 2.0], [-0.65, 2.0], [-1.7, 1.75]], tableW: 0.9 },
   khr:    { device: [0, 3.15], client: [-1.8, 2.95], slots: [[2.0, 1.9], [0.75, 2.3], [-0.75, 2.3], [-2.0, 1.9]], tableW: 0.9 },
   new:    { device: [0, 3.5], client: [-2.2, 3.6], slots: [[2.4, 2.4], [0.8, 3.0], [-0.8, 3.0], [-2.4, 2.4]], tableW: 1.2 },
   elite:  { device: [0, 5.3], client: [-2.6, 5.0], slots: [[2.9, 3.0], [1.0, 3.8], [-1.0, 3.8], [-2.9, 3.0]], tableW: 1.4 },
