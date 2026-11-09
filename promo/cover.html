@@ -1,0 +1,23 @@
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: Nunito; src: url("../game/node_modules/@fontsource/nunito/files/nunito-cyrillic-900-normal.woff2") format("woff2"); font-weight: 900; }
+@font-face { font-family: Nunito; src: url("../game/node_modules/@fontsource/nunito/files/nunito-cyrillic-700-normal.woff2") format("woff2"); font-weight: 700; }
+@font-face { font-family: Neucha; src: url("../game/node_modules/@fontsource/neucha/files/neucha-cyrillic-400-normal.woff2") format("woff2"); }
+html,body{margin:0;width:630px;height:500px;overflow:hidden;background:#1d2127}
+.bg{position:absolute;inset:0;background:url("bg_khr.png") 70% 45%/auto 112% no-repeat;filter:saturate(1.05)}
+.shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,16,19,.0) 30%,rgba(14,16,19,.75) 100%),radial-gradient(120% 90% at 50% 40%,transparent 55%,rgba(10,8,6,.55) 100%)}
+.sheet{position:absolute;left:26px;bottom:30px;width:440px;padding:20px 24px 18px;background:#e6eaec;border-radius:6px;transform:rotate(-1.6deg);box-shadow:0 2px 0 #c3cbd0,0 22px 40px rgba(0,0,0,.5);background-image:repeating-linear-gradient(180deg,transparent 0 27px,rgba(30,60,140,.12) 27px 28px)}
+.sheet::after{content:"";position:absolute;top:-10px;left:46%;width:84px;height:22px;transform:rotate(3deg);background:rgba(241,208,75,.85)}
+h1{margin:0;font:900 50px/1 Nunito;color:#2a2d33;letter-spacing:-.01em}
+.sub{font:26px Neucha;color:#1e3c8c;margin-top:6px}
+.logo{position:absolute;right:22px;top:22px;width:74px;height:74px;border-radius:18px;background:#f1d04b;display:grid;place-items:center;transform:rotate(-6deg);box-shadow:0 7px 0 #d9b52e,0 16px 26px rgba(0,0,0,.4)}
+.logo svg{width:42px;height:42px}
+.stamp{position:absolute;right:30px;bottom:172px;font:900 26px Nunito;letter-spacing:.06em;color:#a3294a;border:4px solid #a3294a;border-radius:10px;padding:4px 12px;transform:rotate(-14deg);background:rgba(230,234,236,.85)}
+.sticker{position:absolute;right:26px;top:118px;width:150px;background:#f1d04b;color:#3a2f06;font:20px/1.2 Neucha;padding:10px 12px;transform:rotate(3deg);box-shadow:0 6px 12px rgba(0,0,0,.3)}
+</style></head><body>
+<div class="bg"></div><div class="shade"></div>
+<div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#2a2d33" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.1L3.5 17.2a1.6 1.6 0 0 0 2.3 2.3l5.8-5.8a4 4 0 0 0 5.1-5.4l-2.4 2.4-2.2-.6-.6-2.2z"/></svg></div>
+<div class="sticker">цена по прайсу?<br>или чуть сверху…</div>
+<div class="sheet"><h1>Мастер на день</h1><div class="sub">честно, но не всегда</div></div>
+<div class="stamp">ПРОВЕРКА</div>
+</body></html>
