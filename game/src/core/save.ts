@@ -4,8 +4,8 @@ import { onLoad } from './campaign';
 const KEY = 'master-na-den.save.v1';
 const SETTINGS_KEY = 'master-na-den.settings.v1';
 
-export interface Settings { volume: number; sensitivity: number }
-export const DEFAULT_SETTINGS: Settings = { volume: 1, sensitivity: 1 };
+export interface Settings { volume: number; music: number; sensitivity: number }
+export const DEFAULT_SETTINGS: Settings = { volume: 1, music: 0.7, sensitivity: 1 };
 
 function store(): Storage | null {
   try { return window.localStorage; } catch { return null; }

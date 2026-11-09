@@ -16,6 +16,7 @@ onBeforeUnmount(() => clearInterval(t));
 const left = computed(() => inspectionLeft(o.value, now.value));
 const secs = computed(() => Math.ceil(left.value));
 const urgent = computed(() => secs.value <= 10);
+watch(secs, (v, p) => { if (v !== p && v > 0 && v <= 5 && !o.value.openCard) act.tickSound(v <= 3); });
 
 const card = computed(() => {
   const id = o.value.openCard; if (!id) return null;

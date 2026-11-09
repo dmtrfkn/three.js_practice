@@ -21,7 +21,7 @@ const lastLine = computed(() => last.value ? (o.value.formal ? last.value.line.f
 const arrest = computed(() => c.value.violations >= PARAMS.maxViolations);
 const date = new Date().toLocaleDateString('ru-RU');
 onMounted(() => {
-  if (o.value.outcome === 'paid') { setTimeout(() => { printed.value = true; sfx('cash'); }, 300); }
+  if (o.value.outcome === 'paid') { setTimeout(() => { printed.value = true; sfx('print'); }, 300); setTimeout(() => sfx('cash'), 2000); }
   if (reveal.value) setTimeout(() => { stamped.value = true; sfx('stamp'); }, 1700);
   if (o.value.outcome === 'complaint') setTimeout(() => { stamped.value = true; sfx('stamp'); }, 500);
 });

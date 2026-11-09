@@ -22,7 +22,7 @@ const omenText = (o: (typeof offers.value)[number]) => {
 const pending = computed(() => offers.value.find((o) => o.id === ui.confirmOffer) ?? null);
 const progress = computed(() => Math.max(0, Math.min(1, c.value.money / st.value.quota)));
 const last = computed(() => c.value.history[c.value.history.length - 1] ?? null);
-function choose(id: string) { if (st.value.callsLeft <= 0) return; sfx('paper'); ui.confirmOffer = id; }
+function choose(id: string) { if (st.value.callsLeft <= 0) return; sfx('pin'); sfx('paper'); ui.confirmOffer = id; }
 </script>
 
 <template>
@@ -60,7 +60,7 @@ function choose(id: string) { if (st.value.callsLeft <= 0) return; sfx('paper');
         <div class="cards">
           <article v-for="(o, i) in offers" :key="o.id" class="order" :class="{ taken: o.taken }" :style="{ '--r': [-2, 1.4, -0.6, 2.2, -1.6][i] + 'deg', '--y': [0, 8, 0, 4, 10][i] + 'px' }"
                    :tabindex="o.taken ? -1 : 0" role="button" :aria-disabled="o.taken" :aria-label="`Заявка ${o.no}: ${DEVICES[o.deviceId].name}, клиент ${o.client.name}`"
-                   @click="!o.taken && choose(o.id)" @keydown.enter="!o.taken && choose(o.id)">
+                   @click="!o.taken && choose(o.id)" @keydown.enter="!o.taken && choose(o.id)" @mouseenter="!o.taken && sfx('hover')">
             <span class="pin" aria-hidden="true" />
             <span class="stamp-mark tier">{{ tierMark(o.tier) }}</span>
             <div class="no mono">заявка № {{ String(o.no).padStart(4, '0') }}</div>

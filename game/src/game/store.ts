@@ -3,7 +3,7 @@ import { reactive, ref, watch } from 'vue';
 import * as core from '../core/campaign';
 import type { Campaign } from '../core/types';
 import { loadCampaign, saveCampaign, hasSave, clearSave, loadSettings, saveSettings, type Settings } from '../core/save';
-import { sfx, setVolume } from '../audio/sfx';
+import { sfx, setVolume, setMusicVolume } from '../audio/sfx';
 
 export type Screen = 'menu' | 'game';
 
@@ -20,8 +20,9 @@ export const ui = reactive({
 });
 
 export const settings = reactive<Settings>(loadSettings());
-watch(settings, (s) => { saveSettings({ ...s }); setVolume(s.volume); }, { deep: true });
+watch(settings, (s) => { saveSettings({ ...s }); setVolume(s.volume); setMusicVolume(s.music); }, { deep: true });
 setVolume(settings.volume);
+setMusicVolume(settings.music);
 
 export const game = ref<Campaign | null>(null);
 export const canContinue = ref(hasSave());
@@ -75,6 +76,7 @@ export const act = {
   failAttempt() { core.failAttempt(g()); sfx('fail'); persist(); },
   succeedAttempt() { core.succeedAttempt(g()); sfx('success'); persist(); },
   finishOrder() { core.finishOrder(g()); ui.lastReaction = null; ui.showReveal = false; sfx('click'); persist(); },
+  tickSound(urgent: boolean) { sfx(urgent ? 'tickUrgent' : 'tick'); },
   move() { core.moveNext(g()); ui.confirmMove = false; sfx('truck'); persist(); },
   workshop() { core.openWorkshop(g()); persist(); },
   markTutorial() { g().tutorialSeen = true; persist(); },

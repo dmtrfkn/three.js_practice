@@ -2,7 +2,8 @@
 import { computed, onMounted, onBeforeUnmount, ref, watch, nextTick } from 'vue';
 import { RoomScene } from '../scene/RoomScene';
 import { game, ui, act, settings, toast } from '../game/store';
-import { startAmbient, stopAmbient } from '../audio/sfx';
+import { startAmbient, stopAmbient, sfx, unlockAudio } from '../audio/sfx';
+import { playMusic, jingle } from '../audio/music';
 import { LOCATIONS } from '../core/params';
 import MenuScreen from './screens/MenuScreen.vue';
 import BoardScreen from './screens/BoardScreen.vue';
@@ -70,6 +71,31 @@ watch(() => order.value?.reactions.length, (n, prev) => {
 });
 watch(() => order.value?.repaired, (v) => { if (v) scene?.client?.react('happy'); });
 watch(() => ui.screen, (s) => { if (s === 'menu') stopAmbient(); });
+
+// музыка: меню и доска заявок — свой трек; в квартире — только звуки комнаты
+const musicTrack = computed(() => {
+  if (ui.screen === 'menu') return 'menu';
+  const g = c.value; if (!g) return 'menu';
+  if (g.status === 'board' || g.status === 'mustMove') return LOCATIONS[g.locIdx].id;
+  return null;
+});
+function applyMusic() { playMusic(musicTrack.value); }
+watch(musicTrack, applyMusic);
+onMounted(() => unlockAudio(applyMusic));
+watch(() => (inOrder.value ? null : 'out'), (v) => { if (v) stopAmbient(); });
+// джинглы итогов
+watch(() => order.value?.outcome, (o) => {
+  if (!o || !order.value) return;
+  if (o === 'paid') setTimeout(() => jingle(order.value?.violation ? 'violation' : 'paid'), order.value.violation ? 1700 : 900);
+  else { jingle('left'); sfx('steps'); }
+});
+watch(() => c.value?.status, (s, prev) => {
+  if (s === 'victory') jingle('win');
+  else if (s === 'gameover') jingle(c.value?.ending === 'arrest' ? 'arrest' : 'lose');
+  else if (s === 'board' && prev === 'mustMove') jingle('move');
+});
+watch(() => c.value?.locIdx, (n, p) => { if (p !== undefined && n !== undefined && n > p && c.value?.status === 'board') jingle('move'); });
+watch(() => order.value?.mood, (m, p) => { if (m !== undefined && p !== undefined && m < p) sfx('moodDown'); });
 
 // таймер осмотра
 let tick = 0;

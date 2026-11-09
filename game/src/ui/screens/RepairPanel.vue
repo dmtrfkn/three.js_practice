@@ -39,7 +39,7 @@ async function start() {
     onSuccess: () => { cleanup(); act.succeedAttempt(); },
   });
   endAt = performance.now() + PARAMS.repairSeconds * 1000;
-  timer = window.setInterval(() => { timeLeft.value = Math.max(0, Math.ceil((endAt - performance.now()) / 1000)); if (timeLeft.value <= 0) fail('Время вышло'); }, 100);
+  timer = window.setInterval(() => { const prev = timeLeft.value; timeLeft.value = Math.max(0, Math.ceil((endAt - performance.now()) / 1000)); if (timeLeft.value !== prev && timeLeft.value > 0 && timeLeft.value <= 5) act.tickSound(timeLeft.value <= 3); if (timeLeft.value <= 0) fail('Время вышло'); }, 100);
 }
 function cleanup() { clearInterval(timer); mini?.stop(); setTimeout(() => { mini?.destroy(); mini = null; }, 700); running.value = false; }
 function fail(reason: string) { if (!running.value) return; msg.value = reason; cleanup(); act.failAttempt(); }
