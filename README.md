@@ -25,7 +25,7 @@ npm run build    # статическая сборка для itch.io
 
 | Папка | Что внутри |
 |---|---|
-| [docs/](docs/) | ГДД (Markdown), ревью, журнал правок [CHANGELOG](docs/CHANGELOG.md), арт-дирекшн, список ассетов, техплан; [docs/word/](docs/word/) — версии для Word с выделением правок; [docs/_original/](docs/_original/) — исходные тексты из Google Docs |
+| [docs/](docs/) | ГДД в Markdown (удобно открывать как хранилище Obsidian — документы связаны ссылками `[[...]]`, начало — [ГДД Мастер на день](<docs/ГДД Мастер на день.md>)), ревью, журнал правок [Журнал правок ГДД](<docs/Журнал правок ГДД.md>), арт-дирекшн, список ассетов, техплан; [docs/word/](docs/word/) — версии для Word с выделением правок; [docs/_original/](docs/_original/) — исходные тексты из Google Docs |
 | [docs/style/](docs/style/) | интерактивная страница утверждения визуального стиля |
 | [game/](game/) | игра: TypeScript + Three.js + Vue 3, тесты Vitest и Playwright |
 | [tools/](tools/) | симулятор баланса (Python), экспорт Markdown → Word, сравнение версий ГДД, промо-скриншоты |

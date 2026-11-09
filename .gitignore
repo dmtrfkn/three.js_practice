@@ -3,3 +3,4 @@ dist/
 game/release/
 *.log
 .DS_Store
+~$*

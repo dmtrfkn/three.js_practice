@@ -23,7 +23,8 @@ def mark(text, kind):
     return f"{lead}{{{kind}{core}{kind}}}{trail}"
 
 def word_diff(a: str, b: str) -> str:
-    ta, tb = re.findall(r'\S+|\s+', a), re.findall(r'\S+|\s+', b)
+    TOK = r'\[\[[^\]]+\]\]|\[[^\]]*\]\([^)]*\)|\S+|\s+'  # ссылки — неделимые токены
+    ta, tb = re.findall(TOK, a), re.findall(TOK, b)
     ops = [list(o) for o in difflib.SequenceMatcher(None, ta, tb, autojunk=False).get_opcodes()]
     # сливаем правки, разделённые короткими совпадениями (≤ 3 слов), — фраза целиком серым, затем целиком жёлтым
     merged = []

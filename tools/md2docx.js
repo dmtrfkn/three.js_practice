@@ -6,7 +6,10 @@ const fs = require('fs');
 const d = require('docx');
 const [, , inPath, outPath, ...flags] = process.argv;
 const legend = flags.includes('--legend');
-const src = fs.readFileSync(inPath, 'utf8').replace(/\\([-+.!#*\[\]()_])/g, '$1').replace(/ | /g, ' ');
+// [[Документ|подпись]] → ссылка на Google Docs (если документ там есть), иначе «подпись»
+const GDOC = JSON.parse(fs.readFileSync(require('path').join(__dirname, 'gdoc_links.json'), 'utf8'));
+const wiki = (name, label) => (GDOC[name] ? `[${label}](${GDOC[name]})` : `«${label}»`);
+const src = fs.readFileSync(inPath, 'utf8').replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, (_, n, l) => wiki(n, l)).replace(/\[\[([^\]]+)\]\]/g, (_, n) => wiki(n, n)).replace(/\\([-+.!#*\[\]()_])/g, '$1').replace(/\u202f|\u00a0/g, ' ');
 const FONT = 'Arial';
 const PAGE_W = 11906, MARGIN = 1134, CONTENT_W = PAGE_W - 2 * MARGIN;
 const HL = { '+': 'yellow', '-': 'lightGray' };
