@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { game, ui, act } from '../../game/store';
+import { PARTS, QUALITY_NAMES } from '../../core/progress';
 import { DEVICES, LINES, TONE } from '../../core/content';
 import { LOCATIONS, PARAMS } from '../../core/params';
 import { rub, signed, mult } from '../format';
@@ -59,6 +60,9 @@ void ui; void LOCATIONS;
             <hr>
             <div class="l"><span>По прайсу</span><span>{{ rub(o.P) }}</span></div>
             <div class="l"><span>Согласовано {{ mult(o.agreedM!) }}</span><span>{{ rub(o.agreedPrice!) }}</span></div>
+            <div class="l"><span>Деталь</span><span>{{ PARTS.find(p => p.id === o.partClass)?.name }}</span></div>
+            <div class="l"><span>Качество</span><span>{{ QUALITY_NAMES[o.quality ?? 0] }}</span></div>
+            <div v-if="o.tip" class="l"><span>Чаевые</span><span>{{ rub(o.tip) }}</span></div>
             <div class="l"><span>Попыток ремонта</span><span>{{ o.attempts }}</span></div>
             <div v-if="o.failures > 0" class="l"><span>Снижение оплаты</span><span>−20 %</span></div>
             <div class="l tot"><span>ИТОГО</span><span>{{ rub(o.payment) }}</span></div>

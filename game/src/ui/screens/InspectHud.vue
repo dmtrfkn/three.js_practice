@@ -21,9 +21,22 @@ watch(secs, (v, p) => { if (v !== p && v > 0 && v <= 5 && !o.value.openCard) act
 const card = computed(() => {
   const id = o.value.openCard; if (!id) return null;
   const d = ALL_ITEMS[id];
-  if (d) return { title: d.title, fact: d.card };
+  const skill = o.value.sk?.attention ?? 1;
+  if (skill === 0) return { title: d?.title ?? NEUTRALS[id]?.name ?? 'Предмет', fact: 'Пока неясно, что эта находка может рассказать о клиенте.', insight: '' };
+  if (d) {
+    let insight = '';
+    if (skill >= 2) {
+      if (d.kind === 'reliable') {
+        const meanings = { budget: ['клиент считает расходы', 'средства на ремонт предусмотрены', 'клиент может позволить себе крупные покупки'], knowledge: ['клиент мало разбирается в технике', 'клиент знаком с основами', 'клиент сам диагностирует технику'], urgency: ['ремонт не срочный', 'устройство понадобится в течение недели', 'устройство нужно сегодня'] };
+        insight = `Вывод: ${meanings[d.category!][d.level!]}. Эта улика надёжна.`;
+        if (skill >= 3) insight += d.category === 'budget' ? ' Бюджет влияет на готовность платить.' : d.category === 'knowledge' ? ' Знающий клиент скорее заметит наценку.' : ' Срочность влияет на готовность принять цену.';
+      } else if (d.kind === 'ambiguous') insight = 'Вывод: вещь может принадлежать не клиенту. Уточните в разговоре, прежде чем судить о его возможностях.';
+      else if (d.kind === 'suspicious') insight = 'Вывод: разговор могут записывать. Это возможный признак проверки, но не доказательство.';
+    }
+    return { title: d.title, fact: d.card, insight };
+  }
   const n = NEUTRALS[id];
-  return { title: n.name, fact: `Перед вами ${n.nameAcc}.` };
+  return { title: n.name, fact: `Перед вами ${n.nameAcc}.`, insight: skill >= 2 ? 'Эта вещь сама по себе ничего надёжного о клиенте не сообщает.' : '' };
 });
 const closeBtn = ref<HTMLButtonElement | null>(null);
 watch(card, async (v) => { if (v) { await nextTick(); closeBtn.value?.focus(); } });
@@ -56,7 +69,8 @@ function focusItem(id: string) { props.scene?.lookAtItem(id); props.scene?.highl
       <div class="note" role="dialog" aria-modal="true" :aria-label="card.title">
         <h3>{{ card.title }}</h3>
         <div class="fact">{{ card.fact }}</div>
-        <div class="meta"><span v-html="ICON.chat" style="width:16px;height:16px;display:inline-block" />в разговоре появится вопрос об этом</div>
+        <p v-if="card.insight" class="insight">{{ card.insight }}</p>
+        <div class="meta"><span v-html="ICON.chat" style="width:16px;height:16px;display:inline-block" />{{ (o.sk?.attention ?? 1) >= 1 ? 'в разговоре появится вопрос об этом' : 'внимательность поможет задавать вопросы о находках' }}</div>
         <div class="row" style="margin-top:12px">
           <button ref="closeBtn" class="btn" type="button" @click="act.closeCard()">Закрыть <span class="kbd">Esc</span></button>
           <span v-if="left <= 0" class="lbl">время вышло — после закрытия начнётся разговор</span>
@@ -73,6 +87,7 @@ function focusItem(id: string) { props.scene?.lookAtItem(id); props.scene?.highl
 .timer.urgent b { color: #fff; }
 .actions { position: absolute; right: 18px; bottom: 18px; display: flex; gap: 10px; align-items: center; }
 .note-bg { position: absolute; inset: 0; background: rgba(8,10,12,.25); }
+.insight { border-left: 3px solid var(--ink); padding-left: 10px; color: var(--ink-dark); font-size: 15px; line-height: 1.35; }
 @media (max-width: 720px) {
   .timer { top: auto; right: auto; left: 8px; bottom: max(12px, env(safe-area-inset-bottom)); font-size: 13px; }
   .timer b { font-size: 17px; }

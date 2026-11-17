@@ -37,11 +37,12 @@ export type FirstOutcome =
   | { kind: 'hard'; C: number };
 
 /** Реакция обычного клиента на первое предложение (rolls — заранее сохранённые броски 0..1). */
-export function firstReaction(P: number, m: number, c: ClientTraits, mood: Level, rolls: FirstRolls): FirstOutcome {
+export interface Charisma { lb: number; nm: number }
+export function firstReaction(P: number, m: number, c: ClientTraits, mood: Level, rolls: FirstRolls, ch: Charisma = { lb: 0, nm: 0 }): FirstOutcome {
   const price = priceOf(P, m);
   if (m <= 1 + EPS) return { kind: 'accept', detected: false };
-  const L = limitL(P, c.budget, mood, c.urgency);
-  const detected = rolls.detect < noticeChance(m, c.knowledge);
+  const L = limitL(P, c.budget, mood, c.urgency) + ch.lb * P;
+  const detected = rolls.detect < Math.max(0, noticeChance(m, c.knowledge) - (m > PARAMS.noticeFreeUpTo ? ch.nm : 0));
   if (detected && c.scandal && m >= PARAMS.scandalTriggerMult - EPS) return { kind: 'complaint' };
   const withinL = price <= L + EPS;
   if (!detected && withinL) return { kind: 'accept', detected: false };
@@ -51,7 +52,7 @@ export function firstReaction(P: number, m: number, c: ClientTraits, mood: Level
   if (detected && rolls.hard < PARAMS.hardDemandChance[c.knowledge]) {
     return { kind: 'hard', C: PARAMS.hardDemandCap[c.knowledge] * P };
   }
-  const Lnew = limitL(P, c.budget, newMood, c.urgency);
+  const Lnew = limitL(P, c.budget, newMood, c.urgency) + ch.lb * P;
   const C = Math.min(Lnew, price - PARAMS.slider.step * P);
   return { kind: 'soft', detected, C };
 }

@@ -38,7 +38,7 @@ let st = await p.evaluate(() => window.__game.game.value.order?.stage);
 if (st === 'price') { await shot('11_refusal'); await p.evaluate(() => { const i = document.querySelector('.tape input'); i.value = '1'; i.dispatchEvent(new Event('input', { bubbles: true })); }); await p.click('button:has-text("Предложить цену")'); await p.waitForTimeout(800); st = await p.evaluate(() => window.__game.game.value.order?.stage); }
 if (st === 'repair') {
   await shot('12_repair_intro');
-  await p.click('.intro .btn'); await p.waitForTimeout(1200); await shot('13_minigame');
+  await p.locator('.intro .part').nth(1).click(); await p.click('.intro .btn'); await p.waitForTimeout(1200); await shot('13_minigame');
   await p.evaluate(() => window.__game.act.succeedAttempt());
   await p.waitForTimeout(2500); await shot('14_result');
 } else { await shot('14_result'); }

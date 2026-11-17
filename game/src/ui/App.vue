@@ -130,7 +130,7 @@ void toast;
 <template>
   <div class="app">
     <div class="desk-bg" />
-    <canvas ref="canvas" class="scene" :class="{ dim, interactive: stage === 'inspect' }" :style="{ visibility: inOrder ? 'visible' : 'hidden' }" aria-label="3D-сцена комнаты клиента" />
+    <canvas ref="canvas" class="scene" :class="{ dim, interactive: stage === 'inspect' }" :style="{ visibility: inOrder ? 'visible' : 'hidden' }" aria-label="Комната клиента в пиксельном 2D" />
     <div class="vignette" v-if="inOrder" />
     <div class="grain" />
 

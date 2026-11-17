@@ -98,10 +98,10 @@ export interface LocationDef {
 }
 
 export const LOCATIONS: LocationDef[] = [
-  { id: 'dorm',   name: 'Общежитие',  address: 'общежитие на Лесной, 14',      quota: 8000,   moveCost: 1000, devices: ['kettle', 'microwave', 'laptop'] },
-  { id: 'khr',    name: 'Хрущёвка',   address: 'ул. Гагарина, 7, кв. 31',      quota: 24000,  moveCost: 3000, devices: ['tv', 'washer', 'fridge'] },
-  { id: 'new',    name: 'Новостройка', address: 'ЖК «Солнечный», корп. 3',      quota: 48000,  moveCost: 5000, devices: ['speaker', 'dishwasher', 'aircon'] },
-  { id: 'elite',  name: 'Элитный ЖК', address: 'ЖК «Резиденция», пентхаус',    quota: 94000,  moveCost: 8000, devices: ['vr', 'coffee', 'tennis'] },
+  { id: 'dorm',   name: 'Общежитие',  address: 'общежитие на Лесной, 14',      quota: 7500,   moveCost: 1000, devices: ['kettle', 'microwave', 'laptop'] },
+  { id: 'khr',    name: 'Хрущёвка',   address: 'ул. Гагарина, 7, кв. 31',      quota: 22500,  moveCost: 3000, devices: ['tv', 'washer', 'fridge'] },
+  { id: 'new',    name: 'Новостройка', address: 'ЖК «Солнечный», корп. 3',      quota: 45000,  moveCost: 5000, devices: ['speaker', 'dishwasher', 'aircon'] },
+  { id: 'elite',  name: 'Элитный ЖК', address: 'ЖК «Резиденция», пентхаус',    quota: 88000,  moveCost: 8000, devices: ['vr', 'coffee', 'tennis'] },
   { id: 'office', name: 'Офис',       address: 'БЦ «Меридиан», 12 этаж',       quota: 150000, moveCost: 0,    devices: ['robovac', 'printer', 'projector'] },
 ];
 

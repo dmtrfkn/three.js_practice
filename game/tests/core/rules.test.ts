@@ -101,7 +101,9 @@ describe('жизненный цикл заказа', () => {
 
   it('полный проход заказа: осмотр → диалог → цена → ремонт → оплата один раз', () => {
     const c = newCampaign(7);
+    c.skills = { attention: 1, reading: 0, charisma: 0, mastery: 0 };
     const o = takeOffer(c, c.offers[0].id);
+    o.noticed = o.items.map((i) => i.id);
     const t0 = 1_000_000;
     startInspection(c, t0);
     expect(openItem(c, o.items[0].id, t0 + 1000)).toBe(true);
@@ -120,7 +122,7 @@ describe('жизненный цикл заказа', () => {
     expect(r.kind).toBe('accept');
     beginAttempt(c); failAttempt(c);
     beginAttempt(c); succeedAttempt(c);
-    expect(o.payment).toBe(Math.round(o.P * 0.8));
+    expect(o.payment - (o.tip ?? 0)).toBe(Math.round(o.P * 0.8));
     expect(o.repDelta).toBe(0);
     const money = c.money;
     finishOrder(c);

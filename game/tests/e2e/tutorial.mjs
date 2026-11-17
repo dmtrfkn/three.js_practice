@@ -41,7 +41,7 @@ await shot('price_' + (await title()));
 await p.click('.price .btn'); await p.waitForTimeout(700);
 if (await p.evaluate(() => window.__game.game.value.order.stage) === 'price') { await shot('price_' + (await title())); await nextBtn(); await p.evaluate(() => { const i = document.querySelector('.tape input'); i.value = '1'; i.dispatchEvent(new Event('input', { bubbles: true })); }); await p.click('.price .btn'); await p.waitForTimeout(700); }
 if (await p.evaluate(() => window.__game.game.value.order.stage) === 'repair') {
-  await shot('repair_' + (await title())); await p.click('.intro .btn'); await p.waitForTimeout(1000);
+  await shot('repair_' + (await title())); await p.locator('.intro .part').nth(1).click(); await p.click('.intro .btn'); await p.waitForTimeout(1000);
   await shot('repair_' + (await title())); await nextBtn();
   await p.evaluate(() => window.__game.act.succeedAttempt());
 }

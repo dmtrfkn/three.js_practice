@@ -83,6 +83,15 @@ export interface Order {
   repDelta: number;
   violation: boolean;
   applied: boolean;
+  /** предметы, которые мастер заметил при своей внимательности */
+  noticed?: string[];
+  /** уровни навыков на момент заказа */
+  sk?: Record<'attention' | 'reading' | 'charisma' | 'mastery', number>;
+  partClass?: 'used' | 'normal' | 'original' | null;
+  partBoughtUrgent?: boolean;
+  quality?: number;
+  tip?: number;
+  persuaded?: boolean;
 }
 
 export interface OrderSummary {
@@ -124,4 +133,14 @@ export interface Campaign {
   tutorialSeen: boolean;
   /** номер текущего шага обучения (первый заказ кампании) */
   tutorialStep?: number;
+  /** уровни навыков мастера 0–3 */
+  skills?: Record<'attention' | 'reading' | 'charisma' | 'mastery', number>;
+  /** запас комплектов деталей по классам */
+  parts?: Record<'used' | 'normal' | 'original', number>;
+  /** всего потрачено на развитие */
+  spent?: number;
+  /** будущие гарантийные случаи после ремонта б/у деталями */
+  warranty?: { due: number; client: string; deviceId: string }[];
+  /** сообщения для игрока, которые нужно показать на доске */
+  news?: string[];
 }

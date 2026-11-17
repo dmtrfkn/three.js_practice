@@ -5,6 +5,7 @@ import {
   beginAttempt, failAttempt, succeedAttempt, finishOrder, moveNext, locationState, availableQuestions, openWorkshop,
 } from '../../src/core/campaign';
 import { PARAMS, LOCATIONS, type Level } from '../../src/core/params';
+import { buySkill, buyParts, nextCost, kitPrice } from '../../src/core/progress';
 import { limitL, noticeChance, inspectorChance } from '../../src/core/rules';
 import type { Campaign } from '../../src/core/types';
 
@@ -34,7 +35,8 @@ const attentive: Strategy = (c) => {
   const p = pi + pr ? pi / (pi + pr) : 0;
   const bp = PARAMS.budgetByLocation[o.locIdx] as unknown as number[];
   let bpost = bp.slice();
-  if (!sus) { bpost = o.client.budget === 2 ? [0, 0, 1] : [bp[0] / (bp[0] + bp[1]), bp[1] / (bp[0] + bp[1]), 0]; }
+  const ambSeen = o.noticed?.some((id) => id.startsWith('AMB')) && (o.sk?.attention ?? 0) >= 1;
+  if (!sus && ambSeen) { bpost = o.client.budget === 2 ? [0, 0, 1] : [bp[0] / (bp[0] + bp[1]), bp[1] / (bp[0] + bp[1]), 0]; }
   const upost = [0.3, 0.4, 0.3];
   const pen = c.violations === 0 ? 0.6 : 30;
   const offer = c.offers.find((x) => x.id === o.offerId)!;
@@ -51,7 +53,7 @@ const attentive: Strategy = (c) => {
 };
 const flat = (x: number): Strategy => () => x;
 
-function play(seed: number, strat: Strategy, failRate: number) {
+function play(seed: number, strat: Strategy, failRate: number, invest = false) {
   const c = newCampaign(seed);
   let rnd = seed * 9301 + 49297;
   const rand = () => ((rnd = (rnd * 9301 + 49297) % 233280) / 233280);
@@ -60,6 +62,12 @@ function play(seed: number, strat: Strategy, failRate: number) {
     const st = locationState(c);
     if (st.canMove) { moveNext(c); continue; }
     if (st.canWin) { openWorkshop(c); break; }
+    if (invest) {
+      // разумное развитие: тратить излишек сверх квоты на навыки, детали брать заранее
+      const spare = c.money - st.quota;
+      for (const b of ['attention', 'charisma', 'reading', 'mastery'] as const) { const cost = nextCost(c, b); if (cost !== null && spare - cost > 0 && (c.skills?.[b] ?? 0) < (b === 'mastery' ? 1 : 2)) buySkill(c, b); }
+      if ((c.parts?.normal ?? 0) < 1 && c.money > kitPrice(c.locIdx, 'normal') * 2) buyParts(c, 'normal', 2);
+    }
     const offer = c.offers.filter((o) => !o.taken).sort((a, b) => b.tier - a.tier)[0];
     takeOffer(c, offer.id);
     const o = c.order!;
@@ -67,7 +75,7 @@ function play(seed: number, strat: Strategy, failRate: number) {
     for (const it of o.items) { openItem(c, it.id, 1); closeCard(c, 1); }
     toDialogue(c);
     const qs = availableQuestions(o);
-    const want = ['base_knowledge', qs.find((q) => q.id.startsWith('AMB') || q.id.startsWith('SUS'))?.id ?? 'base_urgency'];
+    const want = ['base_knowledge', qs.find((q) => q.id.startsWith('AMB') || q.id.startsWith('SUS'))?.id ?? 'base_urgency', 'base_urgency'];
     for (const q of want) { ask(c, q); continueDialogue(c); }
     toPrice(c);
     const m = strat(c);
@@ -89,7 +97,7 @@ describe('баланс (симуляция на ядре)', () => {
   const rate = (s: Strategy) => {
     let win = 0; const where: Record<string, number> = {};
     for (let i = 1; i <= N; i++) {
-      const r = play(i, s, 0.12);
+      const r = play(i, s, 0.12, s === attentive);
       if (r.status === 'victory') win++; else where[`${r.ending}@${r.loc}`] = (where[`${r.ending}@${r.loc}`] ?? 0) + 1;
     }
     return { win: win / N, where };

@@ -7,6 +7,7 @@ import {
   type Phrase, type Category,
 } from './content';
 import type { Campaign, Offer, Order, RoomItem, Reaction, ClientTraits } from './types';
+import { defaultSkills, defaultParts, noticedCount, inspectionBonus, questionsLimit, limitBonus, noticeMinus, canPersuade, repairQuality, kitPrice, urgentMarkup, type PartClass } from './progress';
 import {
   firstReaction, secondAllowed, priceOf, repForOutcome, isViolation, fineFor, clampRep, inspectorChance, moodDown, roundStep,
 } from './rules';
@@ -17,7 +18,7 @@ export function newCampaign(seed = Math.floor(Math.random() * 2 ** 31)): Campaig
   const c: Campaign = {
     version: 1, seed, rng: makeRng(seed), locIdx: 0, money: PARAMS.startMoney, rep: PARAMS.startRep, violations: 0,
     callIndex: 0, callsUsed: 0, orderCounter: 0, offers: [], order: null, inspectorBonus: 0, status: 'board', ending: null,
-    history: [], locationStartMoney: PARAMS.startMoney, tutorialSeen: false, tutorialStep: 0,
+    history: [], locationStartMoney: PARAMS.startMoney, tutorialSeen: false, tutorialStep: 0, skills: defaultSkills(), parts: defaultParts(), spent: 0, warranty: [], news: [],
   };
   generateOffers(c);
   return c;
@@ -76,6 +77,21 @@ export function takeOffer(c: Campaign, offerId: string): Order {
     outcome: null, payment: 0, fine: 0, repDelta: 0, violation: false, applied: false,
   };
   buildRoom(c, order);
+  order.sk = { ...defaultSkills(), ...c.skills };
+  // мастер замечает часть предметов в зависимости от внимательности; достоверный признак — не обязательно
+  const n = noticedCount(c);
+  order.noticed = n >= 4 ? order.items.map((i) => i.id) : shuffle(c.rng, order.items.map((i) => i.id)).slice(0, n);
+  // гарантийные случаи, срок которых подошёл
+  const due = (c.warranty ?? []).filter((w) => w.due <= c.callIndex);
+  if (due.length) {
+    c.warranty = (c.warranty ?? []).filter((w) => w.due > c.callIndex);
+    for (const w of due) {
+      c.rep = clampRep(c.rep - 3);
+      const cost = kitPrice(c.locIdx, 'normal');
+      c.money -= cost;
+      (c.news ??= []).push(`Гарантийный случай: ${w.client} позвонил — ${DEVICES[w.deviceId].nameAcc} снова сломалась после ремонта б/у деталью. Бесплатный выезд и новая деталь: −${cost} ₽, репутация −3.`);
+    }
+  }
   c.order = order;
   c.status = 'order';
   return order;
@@ -106,7 +122,7 @@ function buildRoom(c: Campaign, o: Order): void {
 export function startInspection(c: Campaign, now: number): void {
   const o = c.order!;
   if (o.stage !== 'inspect' || o.inspectEndsAt !== null) return;
-  o.inspectEndsAt = now + PARAMS.inspectionSeconds * 1000;
+  o.inspectEndsAt = now + (PARAMS.inspectionSeconds + inspectionBonus(c)) * 1000;
 }
 
 export const inspectionLeft = (o: Order, now: number) =>
@@ -117,6 +133,7 @@ export function openItem(c: Campaign, itemId: string, now: number): boolean {
   if (o.stage !== 'inspect' || o.openCard) return false;
   if (inspectionLeft(o, now) <= 0) return false;
   if (!o.items.some((i) => i.id === itemId)) return false;
+  if (o.noticed && !o.noticed.includes(itemId)) return false;
   o.openCard = itemId;
   if (!o.inspected.includes(itemId)) o.inspected.push(itemId);
   return true;
@@ -152,6 +169,7 @@ export function availableQuestions(o: Order): QuestionView[] {
     { id: 'base_knowledge', text: BASE_QUESTIONS.knowledge.q, label: 'Спросить про ' + ASK_ABOUT.base_knowledge },
   ];
   for (const id of o.inspected) {
+    if ((o.sk?.attention ?? 1) < 1) break; // на старте мастер не понимает, о чём спросить
     const it = ALL_ITEMS[id];
     list.push({ id, text: it ? it.question : 'А это у вас что?', label: 'Спросить про ' + (ASK_ABOUT[id] ?? 'этот предмет') });
   }
@@ -178,7 +196,7 @@ export function answerText(o: Order, qid: string): string {
 
 export function ask(c: Campaign, qid: string): string | null {
   const o = c.order!;
-  if (o.stage !== 'dialogue' || o.openAnswer || o.asked.length >= PARAMS.questionsToAsk) return null;
+  if (o.stage !== 'dialogue' || o.openAnswer || o.asked.length >= qLimit(o)) return null;
   if (!availableQuestions(o).some((q) => q.id === qid)) return null;
   o.asked.push(qid);
   o.openAnswer = qid;
@@ -189,8 +207,10 @@ export function continueDialogue(c: Campaign): void {
   const o = c.order!;
   if (o.stage !== 'dialogue') return;
   o.openAnswer = null;
-  if (o.asked.length >= PARAMS.questionsToAsk) o.stage = 'diagnosis';
+  if (o.asked.length >= qLimit(o) || availableQuestions(o).length === 0) o.stage = 'diagnosis';
 }
+
+export const qLimit = (o: Order) => ((o.sk?.reading ?? 0) >= 2 ? 3 : 2);
 
 export function toPrice(c: Campaign): void {
   const o = c.order!;
@@ -211,7 +231,7 @@ export function propose(c: Campaign, mRaw: number): Reaction {
       r = { kind: 'accept', line: LINES.accept, m, price };
     } else {
       const rolls = { detect: next(c.rng), goodAccept: next(c.rng), hard: next(c.rng) };
-      const out = firstReaction(o.P, m, o.client, o.mood, rolls);
+      const out = firstReaction(o.P, m, o.client, o.mood, rolls, { lb: limitBonus(c), nm: noticeMinus(c) });
       if (out.kind === 'accept') r = { kind: 'accept', line: LINES.accept, m, price, detected: out.detected };
       else if (out.kind === 'complaint') r = { kind: 'complaint', line: LINES.complaint, m, price, detected: true };
       else {
@@ -225,7 +245,11 @@ export function propose(c: Campaign, mRaw: number): Reaction {
     const prev = o.reactions[o.reactions.length - 1];
     if (!secondAllowed(prev.m, m)) throw new Error('Второе предложение должно быть ниже первого');
     if (price <= (o.ceilingC ?? 0) + 1e-6) r = { kind: 'acceptSecond', line: LINES.acceptSecond, m, price };
-    else { r = { kind: 'leave', line: LINES.leave, m, price }; o.mood = 0; }
+    else if (canPersuade(c) && !o.persuaded) {
+      // харизма 3: один раз уговорить на ещё одно предложение
+      o.persuaded = true;
+      r = { kind: 'soft', line: LINES.persuade, m, price };
+    } else { r = { kind: 'leave', line: LINES.leave, m, price }; o.mood = 0; }
   }
   o.reactions.push(r);
   if (r.kind === 'accept' || r.kind === 'acceptSecond') {
@@ -251,9 +275,22 @@ function finishWithoutRepair(c: Campaign, outcome: 'left' | 'complaint'): void {
 
 /* ---------------- ремонт ---------------- */
 
+/** Выбор деталей перед ремонтом: из запаса или срочно в ближайшем магазине с наценкой. */
+export function chooseParts(c: Campaign, cls: PartClass): boolean {
+  const o = c.order!;
+  if (o.stage !== 'repair' || o.partClass) return false;
+  const stock = c.parts?.[cls] ?? 0;
+  if (stock > 0) { c.parts = { ...defaultParts(), ...c.parts, [cls]: stock - 1 }; o.partClass = cls; return true; }
+  const cost = Math.round(kitPrice(c.locIdx, cls) * urgentMarkup);
+  c.money -= cost; o.partClass = cls; o.partBoughtUrgent = true;
+  c.spent = (c.spent ?? 0) + cost;
+  return true;
+}
+
 export function beginAttempt(c: Campaign): void {
   const o = c.order!;
   if (o.stage !== 'repair' || o.repaired || o.attemptActive) return;
+  if (!o.partClass) chooseParts(c, 'normal');
   o.attempts++;
   o.attemptActive = true;
 }
@@ -265,7 +302,7 @@ export function failAttempt(c: Campaign): void {
   o.failures++;
 }
 
-export function succeedAttempt(c: Campaign): void {
+export function succeedAttempt(c: Campaign, errors = 0): void {
   const o = c.order!;
   if (o.stage !== 'repair' || !o.attemptActive) return;
   o.attemptActive = false;
@@ -274,6 +311,11 @@ export function succeedAttempt(c: Campaign): void {
   const factor = o.failures > 0 ? PARAMS.failedPaymentFactor : 1;
   o.payment = Math.round(o.agreedPrice! * factor);
   o.repDelta = repForOutcome({ outcome: 'paid', objected: o.objected, failures: o.failures, agreedM: o.agreedM });
+  // качество ремонта: класс детали, чистота работы, мастерство
+  const cls = o.partClass ?? 'normal';
+  o.quality = repairQuality(cls, o.failures, errors, o.sk?.mastery ?? 0);
+  if (cls === 'original' || o.quality >= 5) { o.tip = Math.round(o.payment * (o.quality >= 5 && cls === 'original' ? 0.15 : 0.1)); o.payment += o.tip; o.repDelta += 1; }
+  if (cls === 'used' && chance(c.rng, 0.25)) (c.warranty ??= []).push({ due: c.callIndex + 1 + Math.floor(next(c.rng) * 2), client: o.client.name, deviceId: o.deviceId });
   if (o.role === 'inspector' && isViolation(o.agreedM!)) {
     o.violation = true;
     o.fine = fineFor(o.P, o.agreedPrice!);

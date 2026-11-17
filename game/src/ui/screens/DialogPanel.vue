@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { game, ui, act } from '../../game/store';
-import { availableQuestions } from '../../core/campaign';
+import { availableQuestions, qLimit } from '../../core/campaign';
 import { ALL_ITEMS, BASE_QUESTIONS, TONE } from '../../core/content';
-import { LOCATIONS, PARAMS } from '../../core/params';
+import { LOCATIONS } from '../../core/params';
 import { ICON } from '../icons';
 import Portrait from '../components/Portrait.vue';
 import type { RoomScene } from '../../scene/RoomScene';
@@ -11,7 +11,7 @@ import type { RoomScene } from '../../scene/RoomScene';
 const props = defineProps<{ scene: RoomScene | null }>();
 const o = computed(() => game.value!.order!);
 const qs = computed(() => availableQuestions(o.value));
-const left = computed(() => PARAMS.questionsToAsk - o.value.asked.length);
+const left = computed(() => qLimit(o.value) - o.value.asked.length);
 const qText = (id: string) => id === 'base_urgency' ? BASE_QUESTIONS.urgency.q : id === 'base_knowledge' ? BASE_QUESTIONS.knowledge.q : (ALL_ITEMS[id]?.question ?? 'А это у вас что?');
 const openQ = computed(() => o.value.openAnswer);
 // ответ восстанавливается и после загрузки
@@ -38,7 +38,7 @@ void ui;
           <div class="log">
             <template v-for="id in o.asked" :key="id">
               <div class="q"><span class="who">Вы:</span> {{ qText(id) }}</div>
-              <div v-if="id === openQ" class="a"><span class="tone hand">{{ TONE[o.mood] }}</span>{{ answer }}</div>
+              <div v-if="id === openQ" class="a"><span v-if="(o.sk?.reading ?? 0) >= 1" class="tone hand">{{ TONE[o.mood] }}</span>{{ answer }}</div>
               <div v-else class="a past">{{ answerText(o, id) }}</div>
             </template>
           </div>
@@ -50,7 +50,7 @@ void ui;
           </div>
         </div>
       </div>
-      <p class="lbl foot">Заметок нет — запоминайте ответы сами.</p>
+      <p class="lbl foot">{{ (o.sk?.reading ?? 0) >= 3 && o.formal ? 'Мастер замечает формальную манеру речи. Это не доказательство проверки.' : 'Сопоставляйте ответы с найденными уликами.' }}</p>
     </div>
   </div>
 </template>

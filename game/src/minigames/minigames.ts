@@ -29,6 +29,7 @@ abstract class Mini {
   protected ctx: CanvasRenderingContext2D;
   protected w: number; protected h: number;
   protected raf = 0; protected done = false; protected t0 = performance.now();
+  private winTimer = 0;
   protected mx = 0; protected my = 0; protected down = false;
   protected sparks: { x: number; y: number; t: number; ok: boolean }[] = [];
   protected top = 0;
@@ -44,13 +45,13 @@ abstract class Mini {
     this.raf = requestAnimationFrame(loop);
   }
   private on(ev: string, f: EventListener) { this.cv.addEventListener(ev, f); this.handlers.push([ev, f]); }
-  destroy() { cancelAnimationFrame(this.raf); this.handlers.forEach(([e, f]) => this.cv.removeEventListener(e, f)); }
+  destroy() { cancelAnimationFrame(this.raf); clearTimeout(this.winTimer); this.handlers.forEach(([e, f]) => this.cv.removeEventListener(e, f)); }
   stop() { this.done = true; }
   key(_k: string) { /* переопределяется */ }
   protected press() {} protected move() {} protected release() {}
   protected abstract draw(now: number): void;
   protected spark(x: number, y: number, ok = false) { this.sparks.push({ x, y, t: performance.now(), ok }); }
-  protected win() { if (this.done) return; this.done = true; setTimeout(() => this.cb.onSuccess(), 650); }
+  protected win() { if (this.done) return; this.done = true; this.winTimer = window.setTimeout(() => this.cb.onSuccess(), 650); }
   private drawSparks(now: number) {
     const ctx = this.ctx;
     this.sparks = this.sparks.filter((s) => now - s.t < 450);
@@ -310,7 +311,87 @@ export class CleanGame extends Mini {
   }
 }
 
-export function createMini(type: 'swap' | 'wires' | 'calib' | 'clean', cv: HTMLCanvasElement, p: MiniParams, cb: MiniCallbacks): Mini {
+/** Поиск блока: показание измерителя позволяет последовательно исключить половину цепи. */
+export class DiagnoseGame extends Mini {
+  private faulty: number;
+  private low = 0; private high = 7;
+  private message = 'Выберите половину цепи для измерения';
+  constructor(cv: HTMLCanvasElement, p: MiniParams, cb: MiniCallbacks) {
+    super(cv, p, cb); this.faulty = Math.floor(rng(p.seed + 61)() * 8);
+  }
+  protected press() {
+    const boxes = this.boxes();
+    const index = boxes.findIndex(b => this.mx >= b.x && this.mx <= b.x + b.w && this.my >= b.y && this.my <= b.y + b.h);
+    if (index < 0) return;
+    const mid = Math.floor((this.low + this.high) / 2);
+    const from = index === 0 ? this.low : mid + 1, to = index === 0 ? mid : this.high;
+    if (this.faulty >= from && this.faulty <= to) {
+      this.low = from; this.high = to; sfx('beep');
+      if (from === to) { this.message = `Неисправен блок ${from + 1}`; this.win(); }
+      else this.message = 'Сигнал пропадает здесь. Измерьте половину ещё раз.';
+    } else {
+      this.message = 'Сигнал проходит: неисправность в другой половине.';
+      if (index === 0) this.low = mid + 1; else this.high = mid;
+      sfx('beep');
+      if (this.low === this.high) { this.message = `Неисправен блок ${this.low + 1}`; this.win(); }
+    }
+    this.cb.onInfo?.(this.message);
+  }
+  private boxes() {
+    const gap = 16, width = (this.w - 152) / 2, y = this.h * .57;
+    return [{ x: 68, y, w: width, h: 90 }, { x: 68 + width + gap, y, w: width, h: 90 }];
+  }
+  protected draw() {
+    this.frame('ДИАГНОСТИКА ЦЕПИ', 'измерьте половину цепи: исправную можно исключить');
+    const ctx = this.ctx, x = 68, gap = 8, width = (this.w - 136 - gap * 7) / 8, y = this.h * .32;
+    for (let i = 0; i < 8; i++) {
+      ctx.fillStyle = i >= this.low && i <= this.high ? C.board : '#a6aca8'; ctx.fillRect(x + i * (width + gap), y, width, 68);
+      ctx.fillStyle = '#fff'; ctx.font = '20px "Pixelify Sans", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(String(i + 1), x + i * (width + gap) + width / 2, y + 42);
+    }
+    const mid = Math.floor((this.low + this.high) / 2);
+    this.boxes().forEach((b, i) => {
+      ctx.fillStyle = C.ink; ctx.fillRect(b.x, b.y, b.w, b.h);
+      ctx.fillStyle = '#fff'; ctx.font = '22px "Pixelify Sans", sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(`Измерить ${i === 0 ? `${this.low + 1}–${mid + 1}` : `${mid + 2}–${this.high + 1}`}`, b.x + b.w / 2, b.y + 54);
+    });
+    ctx.fillStyle = C.graphite; ctx.font = '20px "Pixelify Sans", sans-serif'; ctx.fillText(this.message, this.w / 2, this.h * .83, this.w - 100); ctx.textAlign = 'left';
+  }
+}
+
+/** При сборке нужно восстановить обратный порядок снятых элементов. */
+export class AssembleGame extends Mini {
+  private order: number[]; private next = 0;
+  constructor(cv: HTMLCanvasElement, p: MiniParams, cb: MiniCallbacks) {
+    super(cv, p, cb); const r = rng(p.seed + 137);
+    this.order = [1, 2, 3, 4].map(n => ({ n, key: r() })).sort((a, b) => a.key - b.key).map(v => v.n);
+  }
+  private boxes() {
+    const gap = 14, width = (this.w - 136 - 3 * gap) / 4;
+    return this.order.map((_, i) => ({ x: 68 + i * (width + gap), y: this.h * .55, w: width, h: 100 }));
+  }
+  protected press() {
+    const i = this.boxes().findIndex(b => this.mx >= b.x && this.mx <= b.x + b.w && this.my >= b.y && this.my <= b.y + b.h);
+    if (i < 0 || this.order[i] <= this.next) return;
+    if (this.order[i] !== this.next + 1) { this.cb.onError('Сначала установите предыдущую деталь по схеме'); sfx('spark'); return; }
+    this.next++; sfx('screw'); this.cb.onInfo?.(`Установлено: ${this.next} из 4`); if (this.next === 4) this.win();
+  }
+  protected draw() {
+    this.frame('ОБРАТНАЯ СБОРКА', 'установите детали по схеме: от основания к крышке');
+    const ctx = this.ctx; ctx.fillStyle = C.graphite; ctx.textAlign = 'center'; ctx.font = '21px "Pixelify Sans", sans-serif';
+    ctx.fillText('1 основание  →  2 плата  →  3 крепёж  →  4 крышка', this.w / 2, this.h * .32, this.w - 120);
+    const names = ['', 'ОСНОВАНИЕ', 'ПЛАТА', 'КРЕПЁЖ', 'КРЫШКА'];
+    this.boxes().forEach((b, i) => {
+      const installed = this.order[i] <= this.next; ctx.fillStyle = installed ? C.ok : C.board; ctx.fillRect(b.x, b.y, b.w, b.h);
+      ctx.fillStyle = '#fff'; ctx.font = '18px "Pixelify Sans", sans-serif'; ctx.fillText(names[this.order[i]], b.x + b.w / 2, b.y + 57, b.w - 10);
+    });
+    ctx.fillStyle = C.graphite; ctx.fillText(`Установлено ${this.next} / 4`, this.w / 2, this.h * .83); ctx.textAlign = 'left';
+  }
+}
+
+export type MiniType = 'swap' | 'wires' | 'calib' | 'clean' | 'diagnose' | 'assemble';
+export function createMini(type: MiniType, cv: HTMLCanvasElement, p: MiniParams, cb: MiniCallbacks): Mini {
+  if (type === 'diagnose') return new DiagnoseGame(cv, p, cb);
+  if (type === 'assemble') return new AssembleGame(cv, p, cb);
   if (type === 'swap') return new SwapGame(cv, p, cb);
   if (type === 'wires') return new WiresGame(cv, p, cb);
   if (type === 'calib') return new CalibGame(cv, p, cb);

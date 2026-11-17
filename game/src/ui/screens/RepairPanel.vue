@@ -2,8 +2,9 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { game, ui, act } from '../../game/store';
 import { DEVICES, TONE } from '../../core/content';
+import { PARTS, kitPrice, urgentMarkup, stageSeconds, extraErrors } from '../../core/progress';
 import { PARAMS, MINIGAME_DIFFICULTY as MD } from '../../core/params';
-import { createMini, type Mini } from '../../minigames/minigames';
+import { createMini, type Mini, type MiniType } from '../../minigames/minigames';
 import { ICON } from '../icons';
 import { rub } from '../format';
 import { TOUCH } from '../device';
@@ -13,37 +14,51 @@ const CW = portrait ? 600 : 900, CH = portrait ? 760 : 560;
 const o = computed(() => game.value!.order!);
 const dev = computed(() => DEVICES[o.value.deviceId]);
 const fault = computed(() => dev.value.faults[o.value.faultIdx]);
-const limit = computed(() => MD.maxErrors[fault.value.type]);
+const limit = computed(() => MD.maxErrors[fault.value.type] + extraErrors(game.value!));
+const seconds = computed(() => stageSeconds(game.value!));
 const cv = ref<HTMLCanvasElement | null>(null);
 let mini: Mini | null = null;
 const running = ref(false);
 const timeLeft = ref<number>(PARAMS.repairSeconds);
 const errors = ref(0);
+const stage = ref(0);
+const stages = computed<MiniType[]>(() => ['diagnose', fault.value.type, 'assemble']);
+const stageNames = ['Диагностика', 'Исправление', 'Сборка и проверка'];
 const msg = ref('');
 let timer = 0, endAt = 0;
 const instr = { swap: 'Перетащите деталь с нужной маркировкой в гнездо. Неверная деталь — искра и ошибка.', wires: 'Ставьте щупы на два конца одного провода. «0 Ом» — провод целый, «OL» на одном проводе — обрыв найден.', calib: TOUCH ? 'Останавливайте стрелку в зелёной зоне тапом. Каждое попадание ускоряет стрелку.' : 'Останавливайте стрелку в зелёной зоне пробелом или кликом. Каждое попадание ускоряет стрелку.', clean: TOUCH ? 'Выкрутите винты по номерам, затем проведите пальцем по грязи и сотрите её.' : 'Выкрутите винты по номерам, затем зажмите кнопку мыши и сотрите всю грязь.' } as const;
 const accepted = computed(() => ui.lastReaction && (ui.lastReaction.kind === 'accept' || ui.lastReaction.kind === 'acceptSecond') && o.value.attempts === 0 ? ui.lastReaction : null);
 
 async function start() {
+  if (!o.value.partClass) return;
   act.beginAttempt();
-  errors.value = 0; msg.value = ''; running.value = true; timeLeft.value = PARAMS.repairSeconds;
+  errors.value = 0; stage.value = 0; msg.value = ''; running.value = true;
   await nextTick();
+  startStage();
+}
+function startStage() {
+  timeLeft.value = seconds.value;
   const li = o.value.locIdx, f = fault.value;
-  mini = createMini(f.type, cv.value!, {
+  mini = createMini(stages.value[stage.value], cv.value!, {
     label: f.calibLabel ?? 'КАЛИБРОВКА', deviceName: dev.value.name, part: f.part,
     parts: MD.swapParts[li], wires: MD.wires[li], hits: MD.calibHits[li], zone: MD.calibZone[li], period: MD.calibPeriod[li], screws: MD.screws[li], dirt: MD.dirt[li],
-    seed: o.value.no * 977 + o.value.attempts * 131,
+    seed: o.value.no * 977 + o.value.attempts * 131 + stage.value * 67,
   }, {
     onError: (m) => { errors.value++; msg.value = m; if (errors.value > limit.value) fail('Слишком много ошибок'); },
     onInfo: (m) => { msg.value = m; },
-    onSuccess: () => { cleanup(); act.succeedAttempt(); },
+    onSuccess: () => {
+      if (!running.value) return;
+      clearInterval(timer); mini?.destroy(); mini = null;
+      if (stage.value < stages.value.length - 1) { stage.value++; msg.value = ''; startStage(); }
+      else { running.value = false; act.succeedAttempt(errors.value); }
+    },
   });
-  endAt = performance.now() + PARAMS.repairSeconds * 1000;
+  endAt = performance.now() + seconds.value * 1000;
   timer = window.setInterval(() => { const prev = timeLeft.value; timeLeft.value = Math.max(0, Math.ceil((endAt - performance.now()) / 1000)); if (timeLeft.value !== prev && timeLeft.value > 0 && timeLeft.value <= 5) act.tickSound(timeLeft.value <= 3); if (timeLeft.value <= 0) fail('Время вышло'); }, 100);
 }
-function cleanup() { clearInterval(timer); mini?.stop(); setTimeout(() => { mini?.destroy(); mini = null; }, 700); running.value = false; }
+function cleanup() { clearInterval(timer); mini?.stop(); mini?.destroy(); mini = null; running.value = false; }
 function fail(reason: string) { if (!running.value) return; msg.value = reason; cleanup(); act.failAttempt(); }
-function onKey(e: KeyboardEvent) { if (running.value && (e.key === ' ' || e.key === 'Enter') && fault.value.type === 'calib') { e.preventDefault(); mini?.key(e.key); } }
+function onKey(e: KeyboardEvent) { if (running.value && (e.key === ' ' || e.key === 'Enter') && stages.value[stage.value] === 'calib') { e.preventDefault(); mini?.key(e.key); } }
 onMounted(() => window.addEventListener('keydown', onKey));
 onBeforeUnmount(() => { window.removeEventListener('keydown', onKey); clearInterval(timer); mini?.destroy(); });
 </script>
@@ -55,18 +70,26 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKey); clearInter
       <div class="spread"><span class="lbl">Ремонт · {{ dev.name }}</span><span class="mono">согласовано {{ rub(o.agreedPrice!) }}</span></div>
       <h3>{{ fault.name }}</h3>
       <p>{{ instr[fault.type] }}</p>
+      <div v-if="!o.partClass" class="parts">
+        <b>Выберите комплект для ремонта</b>
+        <button v-for="part in PARTS" :key="part.id" class="part" type="button" @click="act.chooseParts(part.id)">
+          <span><b>{{ part.name }}</b><small>{{ part.about }}</small></span>
+          <strong>{{ (game!.parts?.[part.id] ?? 0) > 0 ? 'Из запаса · ' + game!.parts![part.id] + ' шт.' : 'Срочно · ' + rub(Math.round(kitPrice(o.locIdx, part.id) * urgentMarkup)) }}</strong>
+        </button>
+      </div>
+      <p v-else class="lbl">Детали: {{ PARTS.find(p => p.id === o.partClass)?.name }}{{ o.partBoughtUrgent ? ' · срочная покупка' : ' · из запаса' }}</p>
       <div v-if="o.failures > 0" class="sticky warn fail-note">
         {{ msg || 'Попытка не удалась' }}. Оплата снижена до {{ Math.round(PARAMS.failedPaymentFactor * 100) }} % — {{ rub(o.agreedPrice! * PARAMS.failedPaymentFactor) }}. Повторные попытки оплату больше не снижают.
       </div>
       <div class="row" style="justify-content:space-between;margin-top:14px">
-        <span class="lbl">{{ PARAMS.repairSeconds }} секунд на попытку · ошибок можно {{ limit }}</span>
-        <button class="btn" :class="{ stamp: o.failures > 0 }" type="button" @click="start" autofocus><span v-html="ICON.wrench" />{{ o.failures > 0 ? 'Повторить' : 'Начать ремонт' }}</button>
+        <span class="lbl">{{ seconds }} секунд на этап · ошибок можно {{ limit }} за всю попытку</span>
+        <button class="btn" :class="{ stamp: o.failures > 0 }" type="button" :disabled="!o.partClass" @click="start" autofocus><span v-html="ICON.wrench" />{{ o.failures > 0 ? 'Повторить' : 'Начать ремонт' }}</button>
       </div>
     </div>
 
     <div v-else class="bench" :style="{ '--ar': CW / CH }">
       <div class="bench-top">
-        <span class="chip">{{ dev.name }} · {{ fault.name.toLowerCase() }}</span>
+        <span class="chip">{{ dev.name }} · {{ stageNames[stage] }} ({{ stage + 1 }}/3)</span>
         <span class="chip dark" :class="{ urgent: timeLeft <= 5 }"><span v-html="ICON.timer" /><b>0:{{ String(timeLeft).padStart(2, '0') }}</b></span>
       </div>
       <canvas ref="cv" :width="CW" :height="CH" class="mini" :style="{ aspectRatio: CW + '/' + CH }" aria-label="Миниигра ремонта" />
@@ -81,6 +104,10 @@ onBeforeUnmount(() => { window.removeEventListener('keydown', onKey); clearInter
 </template>
 
 <style scoped>
+.parts { display: grid; gap: 6px; margin: 12px 0; }
+.part { display: flex; text-align: left; justify-content: space-between; gap: 10px; padding: 8px; border: 1px solid var(--paper-edge); border-radius: 8px; background: var(--paper-2); cursor: pointer; }
+.part small { display: block; }
+.part strong { flex: none; }
 .intro { width: min(520px, calc(100vw - 36px)); }
 .intro h3 { margin: 10px 0 6px; font-size: 22px; font-weight: 900; }
 .said { background: var(--paper-2); border-radius: 12px; padding: 9px 12px; margin-bottom: 12px; animation: fade .3s; }

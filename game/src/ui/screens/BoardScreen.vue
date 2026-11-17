@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+import { BRANCHES, PARTS, level, nextCost, kitPrice } from '../../core/progress';
 import { game, ui, act, toMenu } from '../../game/store';
 import { LOCATIONS, PARAMS } from '../../core/params';
 import { DEVICES, URGENCY_HINT, OMENS } from '../../core/content';
@@ -9,6 +10,7 @@ import { rub, signed, plural } from '../format';
 import DeviceIcon from '../components/DeviceIcon.vue';
 import { sfx } from '../../audio/sfx';
 
+const workshopOpen = ref(false);
 const c = computed(() => game.value!);
 const loc = computed(() => LOCATIONS[c.value.locIdx]);
 const st = computed(() => locationState(c.value));
@@ -74,15 +76,34 @@ function choose(id: string) { if (st.value.callsLeft <= 0) return; sfx('pin'); s
           </article>
         </div>
 
+        <div v-if="c.news?.length" class="news paper"><b>Новости</b><p v-for="(notice, i) in c.news" :key="i">{{ notice }}</p></div>
         <div class="board-foot">
           <div v-if="last" class="last hand">прошлый заказ: {{ DEVICES[last.deviceId].name.toLowerCase() }}, {{ last.client }} — {{ last.outcome === 'paid' ? 'оплачено ' + rub(last.payment) : last.outcome === 'left' ? 'клиент ушёл' : 'жалоба' }}{{ last.violation ? ', штраф ' + rub(last.fine) : '' }}</div>
           <div v-else class="last hand">выберите заявку — цена станет известна после диагностики</div>
           <div class="row">
+            <button class="btn ghost" type="button" @click="workshopOpen = true"><span v-html="ICON.wrench" />Навыки и детали</button>
             <button v-if="st.canMove" class="btn yellow" type="button" @click="ui.confirmMove = true"><span v-html="ICON.truck" />Переехать за {{ rub(loc.moveCost) }}</button>
             <button v-if="st.canWin" class="btn ok" type="button" @click="act.workshop()"><span v-html="ICON.wrench" />Открыть мастерскую</button>
           </div>
         </div>
         <div v-if="st.canMove" class="move-note sticky">Вы уже сейчас можете переехать!</div>
+      </div>
+    </div>
+
+    <div v-if="workshopOpen" class="modal-bg" @click.self="workshopOpen = false">
+      <div class="paper modal shop" role="dialog" aria-modal="true" aria-label="Навыки и детали">
+        <div class="spread"><h3>Мастерская на колёсах</h3><button class="btn ghost" type="button" @click="workshopOpen = false">Закрыть</button></div>
+        <p>Баланс: <b>{{ rub(c.money) }}</b>. Вложения помогают в работе, но оставьте деньги на переезд.</p>
+        <h4>Навыки</h4>
+        <div v-for="branch in BRANCHES" :key="branch.id" class="shop-row">
+          <div><b>{{ branch.name }} · {{ level(c, branch.id) }}/3</b><div>{{ branch.levels[level(c, branch.id)].effect }}</div><small v-if="nextCost(c, branch.id) !== null">Следующий уровень: {{ branch.levels[level(c, branch.id) + 1].effect }}</small></div>
+          <button class="btn" type="button" :disabled="nextCost(c, branch.id) === null || c.money < nextCost(c, branch.id)!" @click="act.buySkill(branch.id)">{{ nextCost(c, branch.id) === null ? 'Максимум' : rub(nextCost(c, branch.id)!) }}</button>
+        </div>
+        <h4>Комплекты деталей</h4>
+        <div v-for="part in PARTS" :key="part.id" class="shop-row">
+          <div><b>{{ part.name }} · в запасе {{ c.parts?.[part.id] ?? 0 }}</b><div>{{ part.about }}</div></div>
+          <button class="btn" type="button" :disabled="c.money < kitPrice(c.locIdx, part.id)" @click="act.buyParts(part.id)">Купить {{ rub(kitPrice(c.locIdx, part.id)) }}</button>
+        </div>
       </div>
     </div>
 
@@ -112,6 +133,14 @@ function choose(id: string) { if (st.value.callsLeft <= 0) return; sfx('pin'); s
 
 <style scoped>
 .board { overflow: auto; }
+.shop { width: min(740px, calc(100vw - 24px)); max-height: 90dvh; overflow: auto; }
+.shop h4 { margin: 18px 0 5px; }
+.shop-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px dotted #aab2b8; padding: 10px 0; }
+.shop-row small { color: var(--ink); }
+.shop-row button { flex: none; }
+.news { padding: 10px 14px; margin-top: 20px; }
+.news p { margin: 4px 0; }
+@media (max-width: 620px) { .shop-row { align-items: flex-start; flex-direction: column; } }
 .wrap { min-height: 100%; display: grid; place-items: center; padding: 72px 20px 24px; }
 .cork { position: relative; width: min(1180px, 100%); border-radius: 22px; padding: 28px 26px 26px; color: #2b1d0f;
   background:

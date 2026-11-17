@@ -28,7 +28,7 @@ for (const [tag, vp] of [['p', { width: 390, height: 844 }], ['l', { width: 844,
   await shot('07_diag', 1800); await p.click('button:has-text("Назначить цену")'); await shot('08_price');
   await p.click('button:has-text("Предложить цену")'); await p.waitForTimeout(500);
   if (await p.evaluate(() => window.__game.game.value.order.stage) === 'repair') {
-    await shot('09_repair'); await p.click('.intro .btn'); await shot('10_mini', 1200);
+    await shot('09_repair'); await p.locator('.intro .part').nth(1).click(); await p.click('.intro .btn'); await shot('10_mini', 1200);
     await p.evaluate(() => window.__game.act.succeedAttempt()); await shot('11_result', 2500);
   }
   await p.evaluate(() => { const G = window.__game; const c = G.game.value; if (c.order) G.act.finishOrder(); c.money = 9000; G.act.takeOffer(c.offers.find((o) => !o.taken).id); const A = G.act; A.toDialogue(); A.ask('base_knowledge'); A.continueDialogue(); A.ask('base_urgency'); A.continueDialogue(); A.toPrice(); A.propose(1.6); });
