@@ -1,10 +1,53 @@
 import { describe, expect, it } from 'vitest';
-import { newCampaign, takeOffer, finishOrder, onLoad, openWorkshop } from '../../src/core/campaign';
-import { buyParts, buyTool, repairQuality, TOOLS } from '../../src/core/progress';
+import { newCampaign, takeOffer, chooseParts, finishOrder, onLoad, openWorkshop } from '../../src/core/campaign';
+import { buyParts, buyTool, buyComponent, componentPrice, componentStock, requiredComponent, COMPONENTS, repairQuality, toolSupport, TOOLS, TOOL_SUPPORT } from '../../src/core/progress';
+import { DEVICES } from '../../src/core/content';
 import { LOCATIONS, PARAMS } from '../../src/core/params';
 import { makeRng, next } from '../../src/core/rng';
 
 describe('мастерская', () => {
+  it('каждая поломка имеет отдельную закупаемую деталь', () => {
+    expect(COMPONENTS).toHaveLength(30);
+    expect(new Set(COMPONENTS.map(x => x.id)).size).toBe(30);
+    for (const device of Object.values(DEVICES)) for (const idx of [0, 1]) expect(requiredComponent(device.id, idx)).toBeDefined();
+  });
+
+  it('покупает точную деталь, сохраняет и расходует её при подходящем заказе', () => {
+    const c = newCampaign(7);
+    c.money = 5000;
+    const offer = c.offers[0];
+    const item = requiredComponent(offer.deviceId, offer.faultIdx)!;
+    const price = componentPrice(c.locIdx, item.id, 'normal');
+    expect(buyComponent(c, item.id, 'normal', 2)).toBe(true);
+    expect(c.money).toBe(5000 - price * 2);
+    expect(componentStock(c, item.id, 'normal')).toBe(2);
+    const restored = JSON.parse(JSON.stringify(c));
+    const o = takeOffer(restored, offer.id); o.stage = 'repair';
+    expect(chooseParts(restored, 'normal')).toBe(true);
+    expect(componentStock(restored, item.id, 'normal')).toBe(1);
+    expect(restored.parts.normal).toBe(2);
+    expect(o.componentId).toBe(item.id);
+    expect(chooseParts(restored, 'normal')).toBe(false);
+    expect(componentStock(restored, item.id, 'normal')).toBe(1);
+  });
+
+  it('проверяет количество и цену детали до покупки', () => {
+    const c = newCampaign(8); c.money = 1;
+    expect(buyComponent(c, COMPONENTS[0].id, 'normal')).toBe(false);
+    expect(buyComponent(c, COMPONENTS[0].id, 'normal', -1)).toBe(false);
+    expect(componentStock(c, COMPONENTS[0].id, 'normal')).toBe(0);
+    expect(c.money).toBe(1);
+  });
+
+  it('инструменты помогают только указанным этапам, бонус ограничен', () => {
+    expect(TOOL_SUPPORT).toHaveLength(23);
+    expect(toolSupport({ oscilloscope: true }, 'i2c_bus').seconds).toBe(4);
+    expect(toolSupport({ oscilloscope: true }, 'gasket_seal').seconds).toBe(0);
+    const help = toolSupport({ bearing_press: true, puller: true, grease_gun: true, torque_driver: true }, 'bearing_fit');
+    expect(help.seconds).toBeLessThanOrEqual(8);
+    expect(help.extraErrors).toBe(1);
+    expect(help.hints.length).toBeGreaterThan(0);
+  });
   it('покупает инструмент один раз, учитывает стоимость и сохраняет его между заказами', () => {
     const c = newCampaign(1);
     c.money = 5000;

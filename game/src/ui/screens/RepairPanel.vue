@@ -2,10 +2,11 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import { game, ui, act } from '../../game/store';
 import { DEVICES, TONE } from '../../core/content';
-import { PARTS, kitPrice, urgentMarkup, stageSeconds, extraErrors } from '../../core/progress';
+import { PARTS, kitPrice, urgentMarkup, stageSeconds, extraErrors, requiredComponent, componentStock, componentPrice, toolSupport } from '../../core/progress';
 import { PARAMS, MINIGAME_DIFFICULTY as MD } from '../../core/params';
 import { createMini, type Mini } from '../../minigames/minigames';
 import { repairChain } from '../../minigames/chains';
+import { ADVANCED_B_TYPES } from '../../minigames/advanced-b';
 import { ICON } from '../icons';
 import { rub } from '../format';
 import { TOUCH } from '../device';
@@ -15,6 +16,7 @@ const CW = portrait ? 600 : 900, CH = portrait ? 760 : 560;
 const o = computed(() => game.value!.order!);
 const dev = computed(() => DEVICES[o.value.deviceId]);
 const fault = computed(() => dev.value.faults[o.value.faultIdx]);
+const component = computed(() => requiredComponent(o.value.deviceId, o.value.faultIdx));
 const limit = computed(() => MD.maxErrors[fault.value.type] + extraErrors(game.value!));
 const seconds = computed(() => stageSeconds(game.value!));
 const cv = ref<HTMLCanvasElement | null>(null);
@@ -22,24 +24,29 @@ let mini: Mini | null = null;
 const running = ref(false);
 const timeLeft = ref<number>(PARAMS.repairSeconds);
 const errors = ref(0);
+const countedErrors = ref(0);
+const toolHint = ref('');
 const stage = ref(0);
 const stages = computed(() => repairChain(fault.value.type, o.value.no * 977 + o.value.locIdx * 131 + o.value.faultIdx * 67, o.value.deviceId));
 const stageNames = ['Подготовка и диагностика', 'Исправление', 'Сборка и проверка'];
 const msg = ref('');
-let timer = 0, endAt = 0, fast = true, stageDuration = 0;
+let timer = 0, endAt = 0, fast = true, stageDuration = 0, protectedErrors = 0;
 const instr = { swap: 'Перетащите деталь с нужной маркировкой в гнездо. Неверная деталь — искра и ошибка.', wires: 'Ставьте щупы на два конца одного провода. «0 Ом» — провод целый, «OL» на одном проводе — обрыв найден.', calib: TOUCH ? 'Останавливайте стрелку в зелёной зоне тапом. Каждое попадание ускоряет стрелку.' : 'Останавливайте стрелку в зелёной зоне пробелом или кликом. Каждое попадание ускоряет стрелку.', clean: TOUCH ? 'Выкрутите винты по номерам, затем проведите пальцем по грязи и сотрите её.' : 'Выкрутите винты по номерам, затем зажмите кнопку мыши и сотрите всю грязь.' } as const;
 const accepted = computed(() => ui.lastReaction && (ui.lastReaction.kind === 'accept' || ui.lastReaction.kind === 'acceptSecond') && o.value.attempts === 0 ? ui.lastReaction : null);
 
 async function start() {
   if (!o.value.partClass) return;
   act.beginAttempt();
-  errors.value = 0; stage.value = 0; msg.value = ''; running.value = true; fast = true;
+  errors.value = 0; countedErrors.value = 0; stage.value = 0; msg.value = ''; running.value = true; fast = true;
   await nextTick();
   startStage();
 }
 function startStage() {
   const kind = stages.value[stage.value];
-  stageDuration = seconds.value + ((kind === 'disassemble' || kind === 'hidden' || kind === 'clean') && game.value!.tools?.screwdrivers ? 5 : 0);
+  const support = toolSupport(game.value!.tools, kind);
+  protectedErrors = support.extraErrors;
+  toolHint.value = support.hints.join(' ');
+  stageDuration = ((ADVANCED_B_TYPES as readonly string[]).includes(kind) ? seconds.value + 100 : seconds.value) + support.seconds + ((kind === 'disassemble' || kind === 'hidden' || kind === 'clean') && game.value!.tools?.screwdrivers ? 5 : 0);
   timeLeft.value = stageDuration;
   const li = o.value.locIdx, f = fault.value;
   mini = createMini(stages.value[stage.value], cv.value!, {
@@ -47,7 +54,7 @@ function startStage() {
     parts: MD.swapParts[li], wires: MD.wires[li], hits: MD.calibHits[li], zone: MD.calibZone[li], period: MD.calibPeriod[li], screws: MD.screws[li], dirt: MD.dirt[li],
     seed: o.value.no * 977 + o.value.attempts * 131 + stage.value * 67, difficulty: li, tools: game.value!.tools,
   }, {
-    onError: (m) => { errors.value++; msg.value = m; if (errors.value > limit.value) fail('Слишком много ошибок'); },
+    onError: (m) => { errors.value++; if (protectedErrors > 0) { protectedErrors--; msg.value = `${m} · инструмент смягчил ошибку`; } else { countedErrors.value++; msg.value = m; } if (countedErrors.value > limit.value) fail('Слишком много ошибок'); },
     onInfo: (m) => { msg.value = m; },
     onSuccess: () => {
       if (!running.value) return;
@@ -76,10 +83,10 @@ onBeforeUnmount(() => { if (import.meta.env.DEV) (window as any).__repairMini = 
       <h3>{{ fault.name }}</h3>
       <p>{{ instr[fault.type] }}</p>
       <div v-if="!o.partClass" class="parts">
-        <b>Выберите комплект для ремонта</b>
+        <b>Нужна деталь: {{ component?.name ?? 'универсальный комплект' }}</b>
         <button v-for="part in PARTS" :key="part.id" class="part" type="button" @click="act.chooseParts(part.id)">
           <span><b>{{ part.name }}</b><small>{{ part.about }}</small></span>
-          <strong>{{ (game!.parts?.[part.id] ?? 0) > 0 ? 'Из запаса · ' + game!.parts![part.id] + ' шт.' : 'Срочно · ' + rub(Math.round(kitPrice(o.locIdx, part.id) * urgentMarkup)) }}</strong>
+          <strong>{{ component && componentStock(game!, component.id, part.id) > 0 ? 'Деталь · ' + componentStock(game!, component.id, part.id) + ' шт.' : (game!.parts?.[part.id] ?? 0) > 0 ? 'Универсальный запас · ' + game!.parts![part.id] + ' шт.' : 'Срочно · ' + rub(Math.round((component ? componentPrice(o.locIdx, component.id, part.id) : kitPrice(o.locIdx, part.id)) * urgentMarkup)) }}</strong>
         </button>
       </div>
       <p v-else class="lbl">Детали: {{ PARTS.find(p => p.id === o.partClass)?.name }}{{ o.partBoughtUrgent ? ' · срочная покупка' : ' · из запаса' }}</p>
@@ -87,7 +94,7 @@ onBeforeUnmount(() => { if (import.meta.env.DEV) (window as any).__repairMini = 
         {{ msg || 'Попытка не удалась' }}. Оплата снижена до {{ Math.round(PARAMS.failedPaymentFactor * 100) }} % — {{ rub(o.agreedPrice! * PARAMS.failedPaymentFactor) }}. Повторные попытки оплату больше не снижают.
       </div>
       <div class="row" style="justify-content:space-between;margin-top:14px">
-        <span class="lbl">{{ seconds }} секунд на этап · ошибок можно {{ limit }} за всю попытку</span>
+        <span class="lbl">{{ seconds }} секунд на обычный этап; сложные операции дают больше времени · ошибок можно {{ limit }} за всю попытку</span>
         <button class="btn" :class="{ stamp: o.failures > 0 }" type="button" :disabled="!o.partClass" @click="start" autofocus><span v-html="ICON.wrench" />{{ o.failures > 0 ? 'Повторить' : 'Начать ремонт' }}</button>
       </div>
     </div>
@@ -95,14 +102,14 @@ onBeforeUnmount(() => { if (import.meta.env.DEV) (window as any).__repairMini = 
     <div v-else class="bench" :style="{ '--ar': CW / CH }">
       <div class="bench-top">
         <span class="chip">{{ dev.name }} · {{ stageNames[stage] }} ({{ stage + 1 }}/3)</span>
-        <span class="chip dark" :class="{ urgent: timeLeft <= 5 }"><span v-html="ICON.timer" /><b>0:{{ String(timeLeft).padStart(2, '0') }}</b></span>
+        <span class="chip dark" :class="{ urgent: timeLeft <= 5 }"><span v-html="ICON.timer" /><b>{{ Math.floor(timeLeft / 60) }}:{{ String(timeLeft % 60).padStart(2, '0') }}</b></span>
       </div>
       <canvas ref="cv" :width="CW" :height="CH" class="mini" :style="{ aspectRatio: CW + '/' + CH }" aria-label="Миниигра ремонта" />
       <div class="bench-foot">
-        <div class="errs" :aria-label="`Ошибки: ${errors} из ${limit + 1}`">
-          <i v-for="k in limit + 1" :key="k" :class="{ bad: k <= errors }">{{ k <= errors ? '✕' : '' }}</i>
+        <div class="errs" :aria-label="`Засчитано ошибок: ${countedErrors} из ${limit + 1}`">
+          <i v-for="k in limit + 1" :key="k" :class="{ bad: k <= countedErrors }">{{ k <= countedErrors ? '✕' : '' }}</i>
         </div>
-        <span class="msg hand">{{ msg }}</span>
+        <span class="msg hand">{{ msg || toolHint }}</span>
       </div>
     </div>
   </div>

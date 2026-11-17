@@ -1,6 +1,7 @@
 import type { Level, Tier } from './params';
 import type { ItemKind, Phrase } from './content';
 import type { RngState } from './rng';
+import type { ComponentId, ToolId, PartClass } from './progress';
 
 export interface ClientTraits {
   name: string;
@@ -89,6 +90,7 @@ export interface Order {
   sk?: Record<'attention' | 'reading' | 'charisma' | 'mastery', number>;
   partClass?: 'used' | 'normal' | 'original' | null;
   partBoughtUrgent?: boolean;
+  componentId?: ComponentId;
   quality?: number;
   tip?: number;
   persuaded?: boolean;
@@ -138,7 +140,9 @@ export interface Campaign {
   /** запас комплектов деталей по классам */
   parts?: Record<'used' | 'normal' | 'original', number>;
   /** Разовые покупки: инструменты остаются у мастера между заказами. */
-  tools?: Partial<Record<'multimeter' | 'screwdrivers' | 'soldering' | 'flashlight' | 'manuals', boolean>>;
+  tools?: Partial<Record<ToolId, boolean>>;
+  /** Конкретные детали по классу качества; универсальные наборы остаются отдельно. */
+  components?: Partial<Record<ComponentId, Partial<Record<PartClass, number>>>>;
   /** всего потрачено на развитие */
   spent?: number;
   /** будущие гарантийные случаи после ремонта б/у деталями */

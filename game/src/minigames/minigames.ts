@@ -2,6 +2,10 @@
 // Каждая игра сообщает о результате через колбэки; таймер и лимит ошибок ведёт хост.
 import { sfx } from '../audio/sfx';
 import { makeExtra, actExtra, EXTRA_TYPES, type ExtraType, type Tools } from './extra-model';
+import { ADVANCED_B_TYPES, makeAdvancedB, actAdvancedB, type AdvancedBType } from './advanced-b';
+import { makeAdvancedA, actAdvancedA } from './advanced-a';
+import { ADVANCED_A_TYPES, type AdvancedAType } from './advanced-types';
+import { actionBoxes, drawAdvanced } from './advanced-render';
 
 export interface MiniCallbacks { onError: (msg: string) => void; onSuccess: () => void; onInfo?: (msg: string) => void }
 export interface MiniParams { label: string; deviceName: string; part?: { kind: string; value: number; unit: string; prefix?: string; suffix?: string }; parts: number; wires: number; hits: number; zone: number; period: number; screws: number; dirt: number; seed: number; difficulty?: number; tools?: Tools }
@@ -484,8 +488,30 @@ export class ExtraGame extends Mini {
   }
 }
 
-export type MiniType = 'swap' | 'wires' | 'calib' | 'clean' | 'diagnose' | 'assemble' | ExtraType;
+/** Многошаговая мастерская: показания и доступные действия меняются после каждого решения. */
+export class AdvancedGame extends Mini {
+  private model;
+  private electric: boolean;
+  constructor(cv: HTMLCanvasElement, p: MiniParams, cb: MiniCallbacks, type: AdvancedAType | AdvancedBType) {
+    super(cv, p, cb);
+    this.electric = (ADVANCED_A_TYPES as readonly string[]).includes(type);
+    this.model = this.electric ? makeAdvancedA(type, p.seed) : makeAdvancedB(type as AdvancedBType, p.seed);
+  }
+  private boxes() { return actionBoxes(this.model, this.w, this.h); }
+  protected press() {
+    const i = this.boxes().findIndex(b => this.mx >= b.x && this.mx <= b.x + b.w && this.my >= b.y && this.my <= b.y + b.h);
+    if (i < 0) return;
+    const result = this.electric ? actAdvancedA(this.model as ReturnType<typeof makeAdvancedA>, i) : actAdvancedB(this.model as ReturnType<typeof makeAdvancedB>, i);
+    if (result === 'error') { sfx('spark'); this.spark(this.mx, this.my); this.cb.onError(this.model.message || 'Проверьте показания'); }
+    else if (result === 'done') { sfx('beep'); this.cb.onInfo?.('Задание выполнено'); this.win(); }
+    else if (result === 'ok' || result === 'info') { if (result === 'ok') sfx('click'); this.cb.onInfo?.(this.model.message ?? 'Продолжайте'); }
+  }
+  protected draw() { drawAdvanced(this.ctx, this.model, this.w, this.h); }
+}
+
+export type MiniType = 'swap' | 'wires' | 'calib' | 'clean' | 'diagnose' | 'assemble' | ExtraType | AdvancedAType | AdvancedBType;
 export function createMini(type: MiniType, cv: HTMLCanvasElement, p: MiniParams, cb: MiniCallbacks): Mini {
+  if ((ADVANCED_A_TYPES as readonly string[]).includes(type) || (ADVANCED_B_TYPES as readonly string[]).includes(type)) return new AdvancedGame(cv, p, cb, type as AdvancedAType | AdvancedBType);
   if ((EXTRA_TYPES as readonly string[]).includes(type)) return new ExtraGame(cv, p, cb, type as ExtraType);
   if (type === 'diagnose') return new DiagnoseGame(cv, p, cb);
   if (type === 'assemble') return new AssembleGame(cv, p, cb);

@@ -7,7 +7,7 @@ import {
   type Phrase, type Category,
 } from './content';
 import type { Campaign, Offer, Order, RoomItem, Reaction, ClientTraits } from './types';
-import { defaultSkills, defaultParts, noticedCount, inspectionBonus, questionsLimit, limitBonus, noticeMinus, canPersuade, repairQuality, kitPrice, urgentMarkup, type PartClass } from './progress';
+import { defaultSkills, defaultParts, noticedCount, inspectionBonus, questionsLimit, limitBonus, noticeMinus, canPersuade, repairQuality, kitPrice, urgentMarkup, requiredComponent, componentStock, componentPrice, type PartClass } from './progress';
 import {
   firstReaction, secondAllowed, priceOf, repForOutcome, isViolation, fineFor, clampRep, inspectorChance, moodDown, roundStep,
 } from './rules';
@@ -18,7 +18,7 @@ export function newCampaign(seed = Math.floor(Math.random() * 2 ** 31)): Campaig
   const c: Campaign = {
     version: 1, seed, rng: makeRng(seed), locIdx: 0, money: PARAMS.startMoney, rep: PARAMS.startRep, violations: 0,
     callIndex: 0, callsUsed: 0, orderCounter: 0, offers: [], order: null, inspectorBonus: 0, status: 'board', ending: null,
-    history: [], locationStartMoney: PARAMS.startMoney, tutorialSeen: false, tutorialStep: 0, skills: defaultSkills(), parts: defaultParts(), spent: 0, warranty: [], news: [],
+    history: [], locationStartMoney: PARAMS.startMoney, tutorialSeen: false, tutorialStep: 0, skills: defaultSkills(), parts: defaultParts(), components: {}, spent: 0, warranty: [], news: [],
   };
   generateOffers(c);
   return c;
@@ -281,10 +281,17 @@ function finishWithoutRepair(c: Campaign, outcome: 'left' | 'complaint'): void {
 /** Выбор деталей перед ремонтом: из запаса или срочно в ближайшем магазине с наценкой. */
 export function chooseParts(c: Campaign, cls: PartClass): boolean {
   const o = c.order!;
-  if (o.stage !== 'repair' || o.partClass) return false;
+  if (!o || o.stage !== 'repair' || o.partClass || !['used', 'normal', 'original'].includes(cls)) return false;
+  const component = requiredComponent(o.deviceId, o.faultIdx);
+  if (component) o.componentId = component.id;
+  if (component && componentStock(c, component.id, cls) > 0) {
+    c.components = { ...c.components, [component.id]: { ...c.components?.[component.id], [cls]: componentStock(c, component.id, cls) - 1 } };
+    o.partClass = cls;
+    return true;
+  }
   const stock = c.parts?.[cls] ?? 0;
   if (stock > 0) { c.parts = { ...defaultParts(), ...c.parts, [cls]: stock - 1 }; o.partClass = cls; return true; }
-  const cost = Math.round(kitPrice(c.locIdx, cls) * urgentMarkup);
+  const cost = Math.round((component ? componentPrice(c.locIdx, component.id, cls) : kitPrice(c.locIdx, cls)) * urgentMarkup);
   c.money -= cost; o.partClass = cls; o.partBoughtUrgent = true;
   c.spent = (c.spent ?? 0) + cost;
   return true;
@@ -332,6 +339,7 @@ export function succeedAttempt(c: Campaign, errors = 0, fast = false): void {
 export function onLoad(c: Campaign): void {
   c.skills = { ...defaultSkills(), ...c.skills };
   c.parts = { ...defaultParts(), ...c.parts };
+  c.components ??= {};
   c.tools ??= {};
   c.warranty ??= [];
   c.news ??= [];

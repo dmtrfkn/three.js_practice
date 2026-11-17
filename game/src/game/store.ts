@@ -1,7 +1,7 @@
 // Реактивная обёртка над ядром: каждое действие вызывает функцию ядра и сразу сохраняет игру.
 import { reactive, ref, watch } from 'vue';
 import * as core from '../core/campaign';
-import { buySkill, buyParts, buyTool, type Branch, type PartClass, type ToolId } from '../core/progress';
+import { buySkill, buyParts, buyComponent, buyTool, type Branch, type PartClass, type ComponentId, type ToolId } from '../core/progress';
 import type { Campaign } from '../core/types';
 import { loadCampaign, saveCampaign, hasSave, clearSave, loadSettings, saveSettings, type Settings } from '../core/save';
 import { sfx, setVolume, setMusicVolume } from '../audio/sfx';
@@ -75,6 +75,7 @@ export const act = {
   },
   buySkill(branch: Branch) { if (buySkill(g(), branch)) { sfx('ok'); persist(); } },
   buyParts(cls: PartClass) { if (buyParts(g(), cls)) { sfx('ok'); persist(); } },
+  buyComponent(id: ComponentId, cls: PartClass) { if (buyComponent(g(), id, cls)) { sfx('ok'); persist(); } },
   buyTool(id: ToolId) { if (buyTool(g(), id)) { sfx('ok'); persist(); } },
   chooseParts(cls: PartClass) { if (core.chooseParts(g(), cls)) { sfx('ok'); persist(); } },
   beginAttempt() { core.beginAttempt(g()); persist(); },

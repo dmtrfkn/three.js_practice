@@ -4,7 +4,7 @@ import type { Campaign } from './types';
 
 export type Branch = 'attention' | 'reading' | 'charisma' | 'mastery';
 export type PartClass = 'used' | 'normal' | 'original';
-export type ToolId = 'multimeter' | 'screwdrivers' | 'soldering' | 'flashlight' | 'manuals';
+export type ToolId = 'multimeter' | 'screwdrivers' | 'soldering' | 'flashlight' | 'manuals' | 'oscilloscope' | 'bench_supply' | 'thermal_camera' | 'magnifier' | 'tweezers' | 'hot_air' | 'desolder_pump' | 'esd_mat' | 'magnetic_tray' | 'torque_driver' | 'ultrasonic_cleaner' | 'pressure_gauge' | 'leak_detector' | 'programmer' | 'signal_generator' | 'bearing_press' | 'feeler_gauge' | 'spring_scale' | 'puller' | 'hose_pliers' | 'airflow_meter' | 'grease_gun' | 'cleaning_brush';
 
 export const TOOLS: { id: ToolId; name: string; cost: number; about: string }[] = [
   { id: 'multimeter', name: 'Хороший мультиметр', cost: 1200, about: 'Помогает найти обрыв и неисправный блок при диагностике.' },
@@ -12,6 +12,29 @@ export const TOOLS: { id: ToolId; name: string; cost: number; about: string }[] 
   { id: 'soldering', name: 'Паяльная станция', cost: 2500, about: 'Помогает аккуратнее паять соединения.' },
   { id: 'flashlight', name: 'Фонарик', cost: 700, about: 'Помогает заметить скрытые винты.' },
   { id: 'manuals', name: 'Сервисные мануалы', cost: 1800, about: 'Подсказывают при работе с прошивкой и сервисным меню.' },
+  { id: 'oscilloscope', name: 'Осциллограф', cost: 2600, about: 'Больше времени на анализ сигнала и диагностику цепи.' },
+  { id: 'bench_supply', name: 'Лабораторный блок питания', cost: 1900, about: 'Защищает при проверке питания и поиске неисправного блока.' },
+  { id: 'thermal_camera', name: 'Тепловизор', cost: 3200, about: 'Облегчает поиск перегрева и неисправных компонентов.' },
+  { id: 'magnifier', name: 'Лупа с подсветкой', cost: 800, about: 'Даёт больше времени на маркировку, осмотр и мелкие соединения.' },
+  { id: 'tweezers', name: 'Набор пинцетов', cost: 650, about: 'Упрощает установку мелких деталей и обратную сборку.' },
+  { id: 'hot_air', name: 'Термовоздушный фен', cost: 2400, about: 'Даёт запас времени на демонтаж и пайку компонентов.' },
+  { id: 'desolder_pump', name: 'Оловоотсос', cost: 700, about: 'Помогает исправить ошибку при пайке.' },
+  { id: 'esd_mat', name: 'Антистатический коврик', cost: 1100, about: 'Защищает электронику при сборке и работе с платами.' },
+  { id: 'magnetic_tray', name: 'Магнитный лоток', cost: 650, about: 'Помогает не потерять крепёж при разборке и сборке.' },
+  { id: 'torque_driver', name: 'Динамометрическая отвёртка', cost: 1600, about: 'Упрощает разборку, сборку и работу с крепежом.' },
+  { id: 'ultrasonic_cleaner', name: 'Ультразвуковая ванна', cost: 2300, about: 'Даёт запас времени на очистку и обслуживание контактов.' },
+  { id: 'pressure_gauge', name: 'Манометр', cost: 1400, about: 'Помогает при диагностике давления и калибровке.' },
+  { id: 'leak_detector', name: 'Детектор протечек', cost: 1500, about: 'Даёт больше времени на поиск утечки.' },
+  { id: 'programmer', name: 'Программатор', cost: 2300, about: 'Упрощает сервисное меню и перепрошивку.' },
+  { id: 'signal_generator', name: 'Генератор сигнала', cost: 2100, about: 'Помогает при настройке и поиске неисправности цепи.' },
+  { id: 'bearing_press', name: 'Пресс для подшипников', cost: 2000, about: 'Добавляет время при посадке подшипника и центровке вала.' },
+  { id: 'feeler_gauge', name: 'Набор щупов', cost: 900, about: 'Помогает выставить зазор шестерён и центровку вала.' },
+  { id: 'spring_scale', name: 'Пружинный динамометр', cost: 900, about: 'Помогает настроить натяжение пружины и ремня.' },
+  { id: 'puller', name: 'Съёмник подшипников', cost: 1300, about: 'Облегчает работу с валом, подшипником и крыльчаткой.' },
+  { id: 'hose_pliers', name: 'Клещи для хомутов', cost: 750, about: 'Дают больше времени при работе со шлангом и уплотнением.' },
+  { id: 'airflow_meter', name: 'Анемометр', cost: 1200, about: 'Помогает настроить поток вентилятора и баланс крыльчатки.' },
+  { id: 'grease_gun', name: 'Маслёнка', cost: 700, about: 'Облегчает работу с подшипником и шестернями.' },
+  { id: 'cleaning_brush', name: 'Щётки для каналов', cost: 650, about: 'Помогают при прочистке фильтров и сливных каналов.' },
 ];
 
 export function buyTool(c: Campaign, id: ToolId): boolean {
@@ -21,6 +44,43 @@ export function buyTool(c: Campaign, id: ToolId): boolean {
   c.spent = (c.spent ?? 0) + tool.cost;
   c.tools = { ...c.tools, [id]: true };
   return true;
+}
+
+type ToolSupport = { id: ToolId; stages: string[]; seconds?: number; extraErrors?: number; hint: string };
+/** Вспомогательные эффекты применяются к соответствующим этапам и не суммируются бесконечно. */
+export const TOOL_SUPPORT: ToolSupport[] = [
+  { id: 'oscilloscope', stages: ['crystal_clock','opamp_clip','i2c_bus'], seconds: 4, hint: 'Осциллограф: сначала сравните форму и частоту сигнала с эталоном.' },
+  { id: 'bench_supply', stages: ['reverse_polarity','voltage_drop','relay_contacts'], extraErrors: 1, hint: 'Блок питания ограничивает ток и позволяет безопасно проверить цепь.' },
+  { id: 'thermal_camera', stages: ['capacitor_esr','transistor_bias','heat_sink'], seconds: 4, hint: 'Тепловизор помогает найти источник перегрева перед настройкой.' },
+  { id: 'magnifier', stages: ['diode_bridge','capacitor_esr','sensor_pullup'], seconds: 4, hint: 'Лупа помогает рассмотреть маркировку и полярность компонентов.' },
+  { id: 'tweezers', stages: ['diode_bridge','led_driver','gasket_seal'], seconds: 4, hint: 'Пинцет упрощает работу с мелкими компонентами.' },
+  { id: 'hot_air', stages: ['capacitor_esr','transistor_bias','led_driver'], seconds: 4, hint: 'Фен облегчает демонтаж деталей с платы.' },
+  { id: 'desolder_pump', stages: ['diode_bridge','relay_contacts','audio_ground'], extraErrors: 1, hint: 'Оловоотсос помогает исправить ошибку при соединении контактов.' },
+  { id: 'esd_mat', stages: ['i2c_bus','logic_probe','sensor_pullup'], extraErrors: 1, hint: 'Антистатический коврик защищает микросхемы при проверке.' },
+  { id: 'magnetic_tray', stages: ['hose_clamp','gasket_seal','heat_sink'], extraErrors: 1, hint: 'Магнитный лоток удерживает снятый крепёж.' },
+  { id: 'torque_driver', stages: ['hose_clamp','heat_sink','bearing_fit'], seconds: 4, hint: 'Динамометрическая отвёртка помогает равномерно затянуть крепёж.' },
+  { id: 'ultrasonic_cleaner', stages: ['drain_path','filter_flow','relay_contacts'], seconds: 4, hint: 'Ультразвуковая ванна помогает удалить загрязнение.' },
+  { id: 'pressure_gauge', stages: ['pressure_valve','pump_prime','filter_flow'], seconds: 4, hint: 'Манометр помогает сопоставить давление и поток.' },
+  { id: 'leak_detector', stages: ['gasket_seal','hose_clamp','pump_prime'], extraErrors: 1, hint: 'Детектор облегчает проверку герметичности соединения.' },
+  { id: 'programmer', stages: ['i2c_bus','logic_probe','crystal_clock'], seconds: 4, hint: 'Программатор помогает проверить состояние цифровой схемы.' },
+  { id: 'signal_generator', stages: ['voltage_divider','opamp_clip','audio_ground'], seconds: 4, hint: 'Генератор подаёт известный сигнал для сравнения.' },
+  { id: 'bearing_press', stages: ['bearing_fit','shaft_align'], seconds: 5, hint: 'Пресс помогает посадить подшипник ровно, без перекоса.' },
+  { id: 'feeler_gauge', stages: ['gear_mesh','shaft_align'], seconds: 5, hint: 'Щуп помогает измерить зазор перед окончательной затяжкой.' },
+  { id: 'spring_scale', stages: ['spring_calibrate','belt'], seconds: 5, hint: 'Динамометр помогает оценить усилие натяжения.' },
+  { id: 'puller', stages: ['bearing_fit','shaft_align','impeller_balance'], extraErrors: 1, hint: 'Съёмник снижает риск повредить детали при разборке.' },
+  { id: 'hose_pliers', stages: ['hose_clamp','gasket_seal'], seconds: 5, hint: 'Клещи удерживают хомут во время регулировки.' },
+  { id: 'airflow_meter', stages: ['fan_airflow','impeller_balance'], seconds: 5, hint: 'Анемометр помогает сравнить поток до и после регулировки.' },
+  { id: 'grease_gun', stages: ['bearing_fit','gear_mesh'], extraErrors: 1, hint: 'Маслёнка облегчает плавную посадку движущихся деталей.' },
+  { id: 'cleaning_brush', stages: ['drain_path','filter_flow','detergent_dose'], seconds: 5, hint: 'Щётки позволяют добраться до узких каналов.' },
+];
+export const STAGE_NAMES: Record<string, string> = {
+  voltage_drop: 'падение напряжения', diode_bridge: 'диодный мост', capacitor_esr: 'проверка конденсатора', transistor_bias: 'смещение транзистора', relay_contacts: 'контакты реле', voltage_divider: 'делитель напряжения', thermistor_curve: 'термистор', opamp_clip: 'усилитель', logic_probe: 'логический пробник', i2c_bus: 'шина данных', crystal_clock: 'тактовый генератор', led_driver: 'драйвер светодиодов', audio_ground: 'земля аудиосхемы', sensor_pullup: 'датчик и подтяжка', reverse_polarity: 'полярность питания',
+  pressure_valve: 'клапан давления', pump_prime: 'прокачка насоса', drain_path: 'сливной канал', hose_clamp: 'хомут шланга', gasket_seal: 'уплотнитель', impeller_balance: 'баланс крыльчатки', bearing_fit: 'посадка подшипника', gear_mesh: 'зацепление шестерён', shaft_align: 'центровка вала', fan_airflow: 'воздушный поток', heat_sink: 'прижим радиатора', spring_calibrate: 'калибровка пружины', detergent_dose: 'дозатор', float_switch: 'поплавковый выключатель', filter_flow: 'поток через фильтр', belt: 'натяжение ремня',
+};
+export const toolStages = (id: ToolId) => TOOL_SUPPORT.find(t => t.id === id)?.stages.map(s => STAGE_NAMES[s] ?? s).join(', ') ?? '';
+export function toolSupport(tools: Campaign['tools'], stage: string) {
+  const used = TOOL_SUPPORT.filter(t => tools?.[t.id] && t.stages.includes(stage));
+  return { seconds: Math.min(8, used.reduce((sum, t) => sum + (t.seconds ?? 0), 0)), extraErrors: Math.min(1, used.reduce((sum, t) => sum + (t.extraErrors ?? 0), 0)), hints: used.map(t => t.hint) };
 }
 
 export interface SkillLevelDef { cost: number; title: string; effect: string }
@@ -95,6 +155,58 @@ export const KIT_BASE = [80, 200, 300, 600, 700];
 export const kitPrice = (locIdx: number, cls: PartClass) => Math.round(KIT_BASE[locIdx] * PARTS.find((p) => p.id === cls)!.mult / 10) * 10;
 /** Если деталей нет с собой — купить у ближайшего магазина с наценкой. */
 export const urgentMarkup = 1.6;
+
+/** Конкретный расходник для каждой неисправности. Класс качества выбирается отдельно. */
+export const COMPONENTS = [
+  { id: 'thermal_fuse', name: 'Термопредохранитель', device: 'kettle', fault: 0, factor: 1 },
+  { id: 'contact_cleaner', name: 'Очиститель контактов', device: 'kettle', fault: 1, factor: 0.8 },
+  { id: 'door_switch', name: 'Микровыключатель дверцы', device: 'microwave', fault: 0, factor: 1.1 },
+  { id: 'glass_fuse', name: 'Плавкий предохранитель', device: 'microwave', fault: 1, factor: 0.8 },
+  { id: 'thermal_paste', name: 'Термопаста', device: 'laptop', fault: 0, factor: 0.9 },
+  { id: 'keyboard_cable', name: 'Шлейф клавиатуры', device: 'laptop', fault: 1, factor: 1.1 },
+  { id: 'capacitor', name: 'Конденсатор блока питания', device: 'tv', fault: 0, factor: 1 },
+  { id: 'led_strip', name: 'Планка подсветки', device: 'tv', fault: 1, factor: 1.3 },
+  { id: 'pump_filter', name: 'Фильтр насоса', device: 'washer', fault: 0, factor: 0.9 },
+  { id: 'level_sensor', name: 'Датчик уровня воды', device: 'washer', fault: 1, factor: 1.2 },
+  { id: 'thermostat', name: 'Термостат', device: 'fridge', fault: 0, factor: 1.2 },
+  { id: 'start_relay', name: 'Пусковое реле', device: 'fridge', fault: 1, factor: 1.1 },
+  { id: 'antenna_cable', name: 'Антенный кабель', device: 'speaker', fault: 0, factor: 0.9 },
+  { id: 'mic_mesh', name: 'Сетка микрофона', device: 'speaker', fault: 1, factor: 0.8 },
+  { id: 'spray_nozzle', name: 'Форсунки разбрызгивателя', device: 'dishwasher', fault: 0, factor: 1 },
+  { id: 'heater_contact', name: 'Контакты нагревателя', device: 'dishwasher', fault: 1, factor: 1.1 },
+  { id: 'coil_cleaner', name: 'Очиститель теплообменника', device: 'aircon', fault: 0, factor: 1 },
+  { id: 'temp_sensor', name: 'Датчик температуры', device: 'aircon', fault: 1, factor: 1.2 },
+  { id: 'lens_spacer', name: 'Комплект юстировки линз', device: 'vr', fault: 0, factor: 1 },
+  { id: 'display_cable', name: 'Шлейф дисплея', device: 'vr', fault: 1, factor: 1.2 },
+  { id: 'descaler', name: 'Средство от накипи', device: 'coffee', fault: 0, factor: 0.8 },
+  { id: 'pressure_valve', name: 'Регулятор давления помпы', device: 'coffee', fault: 1, factor: 1.3 },
+  { id: 'drive_belt', name: 'Приводной ремень', device: 'tennis', fault: 0, factor: 1.2 },
+  { id: 'motor_wire', name: 'Провод двигателя', device: 'tennis', fault: 1, factor: 0.9 },
+  { id: 'main_brush', name: 'Щётка робота-пылесоса', device: 'robovac', fault: 0, factor: 1 },
+  { id: 'cliff_sensor', name: 'Датчик перепада высоты', device: 'robovac', fault: 1, factor: 1.2 },
+  { id: 'feed_roller', name: 'Ролик подачи бумаги', device: 'printer', fault: 0, factor: 1 },
+  { id: 'paper_sensor', name: 'Датчик бумаги', device: 'printer', fault: 1, factor: 1.1 },
+  { id: 'projector_lamp', name: 'Лампа проектора', device: 'projector', fault: 0, factor: 1.5 },
+  { id: 'fan_filter', name: 'Фильтр вентилятора', device: 'projector', fault: 1, factor: 0.9 },
+] as const;
+export type ComponentId = typeof COMPONENTS[number]['id'];
+export type ComponentDef = typeof COMPONENTS[number];
+export const requiredComponent = (deviceId: string, faultIdx: number): ComponentDef | undefined => COMPONENTS.find(p => p.device === deviceId && p.fault === faultIdx);
+export function componentPrice(locIdx: number, id: ComponentId, cls: PartClass): number {
+  const item = COMPONENTS.find(p => p.id === id);
+  // Точный расходник дешевле универсального комплекта, но пригоден только конкретной поломке.
+  return item ? Math.max(10, Math.round(kitPrice(locIdx, cls) * item.factor * 0.65 / 10) * 10) : 0;
+}
+export const componentStock = (c: Campaign, id: ComponentId, cls: PartClass): number => c.components?.[id]?.[cls] ?? 0;
+export function buyComponent(c: Campaign, id: ComponentId, cls: PartClass, n = 1): boolean {
+  if (c.status !== 'board' || c.order || !Number.isInteger(n) || n <= 0 || !COMPONENTS.some(p => p.id === id) || !PARTS.some(p => p.id === cls)) return false;
+  const cost = componentPrice(c.locIdx, id, cls) * n;
+  if (c.money < cost) return false;
+  c.money -= cost;
+  c.spent = (c.spent ?? 0) + cost;
+  c.components = { ...c.components, [id]: { ...c.components?.[id], [cls]: componentStock(c, id, cls) + n } };
+  return true;
+}
 
 export function buyParts(c: Campaign, cls: PartClass, n = 1): boolean {
   if (c.status !== 'board' || c.order || !Number.isInteger(n) || n <= 0 || !PARTS.some(p => p.id === cls)) return false;

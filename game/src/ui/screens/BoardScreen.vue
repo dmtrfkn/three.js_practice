@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { BRANCHES, PARTS, TOOLS, level, nextCost, kitPrice } from '../../core/progress';
+import { BRANCHES, PARTS, TOOLS, COMPONENTS, componentPrice, componentStock, toolStages, level, nextCost, kitPrice, type ComponentId } from '../../core/progress';
 import { game, ui, act, toMenu } from '../../game/store';
 import { LOCATIONS, PARAMS } from '../../core/params';
 import { DEVICES, URGENCY_HINT, OMENS } from '../../core/content';
@@ -11,6 +11,8 @@ import DeviceIcon from '../components/DeviceIcon.vue';
 import { sfx } from '../../audio/sfx';
 
 const workshopOpen = ref(false);
+const selectedComponent = ref<ComponentId>(COMPONENTS[0].id);
+const chosenComponent = computed(() => COMPONENTS.find(p => p.id === selectedComponent.value)!);
 const c = computed(() => game.value!);
 const loc = computed(() => LOCATIONS[c.value.locIdx]);
 const st = computed(() => locationState(c.value));
@@ -104,9 +106,21 @@ function choose(id: string) { if (st.value.callsLeft <= 0) return; sfx('pin'); s
           <div><b>{{ part.name }} · в запасе {{ c.parts?.[part.id] ?? 0 }}</b><div>{{ part.about }}</div></div>
           <button class="btn" type="button" :disabled="c.money < kitPrice(c.locIdx, part.id)" @click="act.buyParts(part.id)">Купить {{ rub(kitPrice(c.locIdx, part.id)) }}</button>
         </div>
+        <h4>Каталог запасных частей · {{ COMPONENTS.length }} позиций</h4>
+        <p>Точная деталь дешевле универсального комплекта, но подходит только к указанной поломке. Выберите качество: подходящая деталь будет использована автоматически.</p>
+        <label class="component-select">Деталь
+          <select v-model="selectedComponent">
+            <option v-for="item in COMPONENTS" :key="item.id" :value="item.id">{{ DEVICES[item.device].name }} — {{ item.name }}</option>
+          </select>
+        </label>
+        <p class="lbl">{{ DEVICES[chosenComponent.device].name }}: {{ DEVICES[chosenComponent.device].faults[chosenComponent.fault].symptom }}.</p>
+        <div v-for="part in PARTS" :key="part.id" class="shop-row">
+          <div><b>{{ chosenComponent.name }} · {{ part.name }}</b><div>На складе: {{ componentStock(c, selectedComponent, part.id) }} шт.</div><small>{{ part.about }}</small></div>
+          <button class="btn" type="button" :disabled="c.money < componentPrice(c.locIdx, selectedComponent, part.id)" @click="act.buyComponent(selectedComponent, part.id)">Купить {{ rub(componentPrice(c.locIdx, selectedComponent, part.id)) }}</button>
+        </div>
         <h4>Инструменты · остаются навсегда</h4>
         <div v-for="tool in TOOLS" :key="tool.id" class="shop-row">
-          <div><b>{{ tool.name }}</b><div>{{ tool.about }}</div></div>
+          <div><b>{{ tool.name }}</b><div>{{ tool.about }}</div><small v-if="toolStages(tool.id)">Этапы: {{ toolStages(tool.id) }}.</small></div>
           <button class="btn" type="button" :disabled="!!c.tools?.[tool.id] || c.money < tool.cost" @click="act.buyTool(tool.id)">{{ c.tools?.[tool.id] ? 'Куплено' : 'Купить ' + rub(tool.cost) }}</button>
         </div>
       </div>
@@ -142,6 +156,8 @@ function choose(id: string) { if (st.value.callsLeft <= 0) return; sfx('pin'); s
 .shop h4 { margin: 18px 0 5px; }
 .shop-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px dotted #aab2b8; padding: 10px 0; }
 .shop-row small { color: var(--ink); }
+.component-select { display: grid; gap: 4px; font-weight: 700; }
+.component-select select { max-width: 100%; padding: 9px; background: var(--paper-2); color: var(--graphite); border: 2px solid var(--graphite); font-size: 15px; }
 .shop-row button { flex: none; }
 .news { padding: 10px 14px; margin-top: 20px; }
 .news p { margin: 4px 0; }
