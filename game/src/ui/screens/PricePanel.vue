@@ -6,6 +6,7 @@ import { TONE } from '../../core/content';
 import { ICON } from '../icons';
 import { rub, mult } from '../format';
 import Portrait from '../components/Portrait.vue';
+import ClientNotebook from '../components/ClientNotebook.vue';
 import { LOCATIONS } from '../../core/params';
 import type { RoomScene } from '../../scene/RoomScene';
 import { phaseOf, STEP_LIMITS } from '../tutorial';
@@ -60,7 +61,7 @@ function onInput(e: Event) { const v = +(e.target as HTMLInputElement).value; m.
 
       <div v-if="reaction" class="said">
         <Portrait v-if="app" class="mini-portrait" :a="app" :mood="o.mood" :loc-id="locId" />
-        <div class="bubble"><span class="tone hand">{{ TONE[o.mood] }}</span>{{ reaction.text }}</div>
+        <div class="bubble"><span v-if="(o.sk?.reading ?? 0) >= 1" class="tone hand">{{ TONE[o.mood] }}</span>{{ reaction.text }}</div>
       </div>
 
       <div class="sum-row">
@@ -82,6 +83,7 @@ function onInput(e: Event) { const v = +(e.target as HTMLInputElement).value; m.
       </div>
       <div class="lbl">← → меняют цену на один шаг{{ second ? ' · второе предложение должно быть ниже первого' : '' }}</div>
 
+      <ClientNotebook v-if="(o.sk?.attention ?? 0) >= 3 || (o.sk?.reading ?? 0) >= 3" :order="o" :multiplier="m" />
       <div v-if="tut" class="tut-cheat">
         <div class="cheat-title">Шпаргалка обучения · скрытое от игрока</div>
         <div v-for="r in cheat.rows" :key="r[0]" class="cheat-row"><span>{{ r[0] }}</span><b>{{ r[1] }}</b></div>
@@ -90,7 +92,7 @@ function onInput(e: Event) { const v = +(e.target as HTMLInputElement).value; m.
       </div>
 
       <div class="row" style="margin-top:14px;justify-content:space-between">
-        <span class="lbl" v-if="second">Это последняя попытка: при отказе клиент уйдёт.</span>
+        <span class="lbl" v-if="second">{{ (o.sk?.charisma ?? 0) >= 3 && !o.persuaded ? 'При повторном отказе можно один раз уговорить клиента.' : 'Это последняя попытка: при отказе клиент уйдёт.' }}</span>
         <span class="lbl" v-else>Цену после согласия изменить нельзя.</span>
         <button class="btn" type="button" :disabled="!canOffer" @click="offer"><span v-html="ICON.money" />Предложить цену</button>
       </div>

@@ -4,7 +4,8 @@ import { game, ui, act } from '../../game/store';
 import { DEVICES, TONE } from '../../core/content';
 import { PARTS, kitPrice, urgentMarkup, stageSeconds, extraErrors } from '../../core/progress';
 import { PARAMS, MINIGAME_DIFFICULTY as MD } from '../../core/params';
-import { createMini, type Mini, type MiniType } from '../../minigames/minigames';
+import { createMini, type Mini } from '../../minigames/minigames';
+import { repairChain } from '../../minigames/chains';
 import { ICON } from '../icons';
 import { rub } from '../format';
 import { TOUCH } from '../device';
@@ -22,45 +23,49 @@ const running = ref(false);
 const timeLeft = ref<number>(PARAMS.repairSeconds);
 const errors = ref(0);
 const stage = ref(0);
-const stages = computed<MiniType[]>(() => ['diagnose', fault.value.type, 'assemble']);
-const stageNames = ['Диагностика', 'Исправление', 'Сборка и проверка'];
+const stages = computed(() => repairChain(fault.value.type, o.value.no * 977 + o.value.locIdx * 131 + o.value.faultIdx * 67, o.value.deviceId));
+const stageNames = ['Подготовка и диагностика', 'Исправление', 'Сборка и проверка'];
 const msg = ref('');
-let timer = 0, endAt = 0;
+let timer = 0, endAt = 0, fast = true, stageDuration = 0;
 const instr = { swap: 'Перетащите деталь с нужной маркировкой в гнездо. Неверная деталь — искра и ошибка.', wires: 'Ставьте щупы на два конца одного провода. «0 Ом» — провод целый, «OL» на одном проводе — обрыв найден.', calib: TOUCH ? 'Останавливайте стрелку в зелёной зоне тапом. Каждое попадание ускоряет стрелку.' : 'Останавливайте стрелку в зелёной зоне пробелом или кликом. Каждое попадание ускоряет стрелку.', clean: TOUCH ? 'Выкрутите винты по номерам, затем проведите пальцем по грязи и сотрите её.' : 'Выкрутите винты по номерам, затем зажмите кнопку мыши и сотрите всю грязь.' } as const;
 const accepted = computed(() => ui.lastReaction && (ui.lastReaction.kind === 'accept' || ui.lastReaction.kind === 'acceptSecond') && o.value.attempts === 0 ? ui.lastReaction : null);
 
 async function start() {
   if (!o.value.partClass) return;
   act.beginAttempt();
-  errors.value = 0; stage.value = 0; msg.value = ''; running.value = true;
+  errors.value = 0; stage.value = 0; msg.value = ''; running.value = true; fast = true;
   await nextTick();
   startStage();
 }
 function startStage() {
-  timeLeft.value = seconds.value;
+  const kind = stages.value[stage.value];
+  stageDuration = seconds.value + ((kind === 'disassemble' || kind === 'hidden' || kind === 'clean') && game.value!.tools?.screwdrivers ? 5 : 0);
+  timeLeft.value = stageDuration;
   const li = o.value.locIdx, f = fault.value;
   mini = createMini(stages.value[stage.value], cv.value!, {
     label: f.calibLabel ?? 'КАЛИБРОВКА', deviceName: dev.value.name, part: f.part,
     parts: MD.swapParts[li], wires: MD.wires[li], hits: MD.calibHits[li], zone: MD.calibZone[li], period: MD.calibPeriod[li], screws: MD.screws[li], dirt: MD.dirt[li],
-    seed: o.value.no * 977 + o.value.attempts * 131 + stage.value * 67,
+    seed: o.value.no * 977 + o.value.attempts * 131 + stage.value * 67, difficulty: li, tools: game.value!.tools,
   }, {
     onError: (m) => { errors.value++; msg.value = m; if (errors.value > limit.value) fail('Слишком много ошибок'); },
     onInfo: (m) => { msg.value = m; },
     onSuccess: () => {
       if (!running.value) return;
+      fast = fast && performance.now() <= endAt - stageDuration * 500;
       clearInterval(timer); mini?.destroy(); mini = null;
       if (stage.value < stages.value.length - 1) { stage.value++; msg.value = ''; startStage(); }
-      else { running.value = false; act.succeedAttempt(errors.value); }
+      else { running.value = false; act.succeedAttempt(errors.value, fast); }
     },
   });
-  endAt = performance.now() + seconds.value * 1000;
+  if (import.meta.env.DEV) (window as any).__repairMini = mini;
+  endAt = performance.now() + stageDuration * 1000;
   timer = window.setInterval(() => { const prev = timeLeft.value; timeLeft.value = Math.max(0, Math.ceil((endAt - performance.now()) / 1000)); if (timeLeft.value !== prev && timeLeft.value > 0 && timeLeft.value <= 5) act.tickSound(timeLeft.value <= 3); if (timeLeft.value <= 0) fail('Время вышло'); }, 100);
 }
-function cleanup() { clearInterval(timer); mini?.stop(); mini?.destroy(); mini = null; running.value = false; }
+function cleanup() { if (import.meta.env.DEV) (window as any).__repairMini = null; clearInterval(timer); mini?.stop(); mini?.destroy(); mini = null; running.value = false; }
 function fail(reason: string) { if (!running.value) return; msg.value = reason; cleanup(); act.failAttempt(); }
 function onKey(e: KeyboardEvent) { if (running.value && (e.key === ' ' || e.key === 'Enter') && stages.value[stage.value] === 'calib') { e.preventDefault(); mini?.key(e.key); } }
 onMounted(() => window.addEventListener('keydown', onKey));
-onBeforeUnmount(() => { window.removeEventListener('keydown', onKey); clearInterval(timer); mini?.destroy(); });
+onBeforeUnmount(() => { if (import.meta.env.DEV) (window as any).__repairMini = null; window.removeEventListener('keydown', onKey); clearInterval(timer); mini?.destroy(); });
 </script>
 
 <template>

@@ -66,8 +66,8 @@ function findTarget(t: Target | undefined): Rect | null {
   const o = c.value?.order; const sc = props.scene; if (!o || !sc) return null;
   let id: string | null = null;
   if ('client' in t) id = '__client';
-  else if (t.item === 'unopened') id = o.items.find((i) => !o.inspected.includes(i.id))?.id ?? null;
-  else id = o.items.find((i) => i.kind === t.item)?.id ?? null;
+  else if (t.item === 'unopened') id = o.items.find((i) => (!o.noticed || o.noticed.includes(i.id)) && !o.inspected.includes(i.id))?.id ?? null;
+  else id = o.items.find((i) => i.kind === t.item && (!o.noticed || o.noticed.includes(i.id)))?.id ?? o.items.find((i) => !o.noticed || o.noticed.includes(i.id))?.id ?? null;
   if (!id) return null;
   const p = sc.screenPos(id); if (!p) return null;
   const size = id === '__client' ? 150 : 96;
@@ -90,7 +90,8 @@ watch(() => step.value?.id, () => {
   const t = step.value?.target; const sc = props.scene; const o = c.value?.order;
   if (!t || !sc || !o || 'css' in t) return;
   if ('client' in t) { sc.focusClient(true); return; }
-  const id = t.item === 'unopened' ? o.items.find((i) => !o.inspected.includes(i.id))?.id : o.items.find((i) => i.kind === t.item)?.id;
+  const visible = o.items.filter((i) => !o.noticed || o.noticed.includes(i.id));
+  const id = t.item === 'unopened' ? visible.find((i) => !o.inspected.includes(i.id))?.id : (visible.find((i) => i.kind === t.item) ?? visible[0])?.id;
   if (id) sc.lookAtItem(id);
 });
 

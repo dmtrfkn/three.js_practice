@@ -29,6 +29,7 @@ onMounted(() => sfx(win.value ? 'success' : 'stamp'));
       <div class="lbl">Итог кампании</div>
       <h1>{{ title }}</h1>
       <p class="text">{{ text }}</p>
+      <div v-if="c.news?.length" class="lbl"><p v-for="(notice, i) in c.news" :key="i">{{ notice }}</p></div>
       <div class="stats">
         <div><span class="lbl">Дошли до</span><b>{{ LOCATIONS[c.locIdx].name }}</b></div>
         <div><span class="lbl">Баланс</span><b class="mono">{{ rub(c.money) }}</b></div>

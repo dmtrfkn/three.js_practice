@@ -6,6 +6,7 @@ import { ALL_ITEMS, BASE_QUESTIONS, TONE } from '../../core/content';
 import { LOCATIONS } from '../../core/params';
 import { ICON } from '../icons';
 import Portrait from '../components/Portrait.vue';
+import ClientNotebook from '../components/ClientNotebook.vue';
 import type { RoomScene } from '../../scene/RoomScene';
 
 const props = defineProps<{ scene: RoomScene | null }>();
@@ -50,6 +51,7 @@ void ui;
           </div>
         </div>
       </div>
+      <ClientNotebook v-if="(o.sk?.attention ?? 0) >= 3" :order="o" />
       <p class="lbl foot">{{ (o.sk?.reading ?? 0) >= 3 && o.formal ? 'Мастер замечает формальную манеру речи. Это не доказательство проверки.' : 'Сопоставляйте ответы с найденными уликами.' }}</p>
     </div>
   </div>

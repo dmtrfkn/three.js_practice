@@ -7,6 +7,7 @@ import {
 import { PARAMS, LOCATIONS, type Level } from '../../src/core/params';
 import { buySkill, buyParts, nextCost, kitPrice } from '../../src/core/progress';
 import { limitL, noticeChance, inspectorChance } from '../../src/core/rules';
+import { ALL_ITEMS, BASE_QUESTIONS } from '../../src/core/content';
 import type { Campaign } from '../../src/core/types';
 
 type Strategy = (c: Campaign) => number;
@@ -26,7 +27,8 @@ function evRegular(P: number, m: number, kn: Level, mood: Level, bpost: number[]
   return ev;
 }
 
-const attentive: Strategy = (c) => {
+// Прежняя стратегия видит скрытые параметры клиента. Сохраняется только для сравнения с оракулом.
+const oracle: Strategy = (c) => {
   const o = c.order!;
   const sus = o.items.some((i) => i.kind === 'suspicious');
   const Q = inspectorChance(c.callIndex - 1, c.rep, 0);
@@ -53,7 +55,7 @@ const attentive: Strategy = (c) => {
 };
 const flat = (x: number): Strategy => () => x;
 
-function play(seed: number, strat: Strategy, failRate: number, invest = false) {
+function play(seed: number, strat: Strategy, failRate: number) {
   const c = newCampaign(seed);
   let rnd = seed * 9301 + 49297;
   const rand = () => ((rnd = (rnd * 9301 + 49297) % 233280) / 233280);
@@ -62,12 +64,6 @@ function play(seed: number, strat: Strategy, failRate: number, invest = false) {
     const st = locationState(c);
     if (st.canMove) { moveNext(c); continue; }
     if (st.canWin) { openWorkshop(c); break; }
-    if (invest) {
-      // разумное развитие: тратить излишек сверх квоты на навыки, детали брать заранее
-      const spare = c.money - st.quota;
-      for (const b of ['attention', 'charisma', 'reading', 'mastery'] as const) { const cost = nextCost(c, b); if (cost !== null && spare - cost > 0 && (c.skills?.[b] ?? 0) < (b === 'mastery' ? 1 : 2)) buySkill(c, b); }
-      if ((c.parts?.normal ?? 0) < 1 && c.money > kitPrice(c.locIdx, 'normal') * 2) buyParts(c, 'normal', 2);
-    }
     const offer = c.offers.filter((o) => !o.taken).sort((a, b) => b.tier - a.tier)[0];
     takeOffer(c, offer.id);
     const o = c.order!;
@@ -97,17 +93,116 @@ describe('баланс (симуляция на ядре)', () => {
   const rate = (s: Strategy) => {
     let win = 0; const where: Record<string, number> = {};
     for (let i = 1; i <= N; i++) {
-      const r = play(i, s, 0.12, s === attentive);
+      const r = play(i, s, 0.12);
       if (r.status === 'victory') win++; else where[`${r.ending}@${r.loc}`] = (where[`${r.ending}@${r.loc}`] ?? 0) + 1;
     }
     return { win: win / N, where };
   };
-  it('стратегии дают ожидаемую лестницу сложности', () => {
-    const honest = rate(flat(1.0)), f110 = rate(flat(1.1)), greedy = rate(flat(1.4)), smart = rate(attentive);
-    console.log('honest', honest, '\n×1.10', f110, '\n×1.40', greedy, '\nattentive', smart);
-    expect(honest.win).toBeLessThan(0.02);
-    expect(greedy.win).toBeLessThan(0.05);
-    expect(smart.win).toBeGreaterThan(0.5);
-    expect(smart.win).toBeGreaterThan(f110.win);
+  it('записывает исходы фиксированных стратегий и оракула', () => {
+    const honest = rate(flat(1.0)), f110 = rate(flat(1.1)), greedy = rate(flat(1.4)), reference = rate(oracle);
+    console.log('honest', honest, '\n×1.10', f110, '\n×1.40', greedy, '\noracle (видит скрытые данные)', reference);
+    for (const result of [honest, f110, greedy, reference]) {
+      expect(result.win * N + Object.values(result.where).reduce((a, b) => a + b, 0)).toBeCloseTo(N);
+    }
   });
+});
+
+// Игрок использует только видимые заявки, открытые карточки и текст ответов.
+// Это одна фиксированная эвристика, а не оценка верхней границы мастерства игрока.
+function playObserved(seed: number, policy: 'clues' | 'fixed120' | 'fixed125' | 'fixed130' | 'fixed135' = 'clues', invest = true) {
+  const c = newCampaign(seed);
+  let rnd = seed * 9301 + 49297;
+  const rand = () => ((rnd = (rnd * 9301 + 49297) % 233280) / 233280);
+  let skillPurchases = 0, partPurchases = 0, attempted = 0;
+  const developedLocations = new Set<number>();
+  for (let guard = 0; guard < 40 && (c.status === 'board' || c.status === 'mustMove'); guard++) {
+    if (c.status === 'mustMove') { moveNext(c); continue; }
+    const st = locationState(c);
+    if (st.canWin) { openWorkshop(c); break; }
+    if (st.canMove) { moveNext(c); continue; }
+    // Первые уровни покупаются до переезда: игрок сознательно жертвует накоплениями.
+    for (const branch of ['attention', 'mastery', 'charisma', 'reading'] as const) {
+      const cost = nextCost(c, branch);
+      if (invest && !developedLocations.has(c.locIdx) && (c.skills?.[branch] ?? 0) < 1 && cost !== null && cost <= c.money * 0.25 && c.money >= cost + 1000 && buySkill(c, branch)) {
+        skillPurchases++; developedLocations.add(c.locIdx); break;
+      }
+    }
+    if ((c.parts?.normal ?? 0) === 0 && c.money >= kitPrice(c.locIdx, 'normal') + 100 && buyParts(c, 'normal')) partPurchases++;
+    if (locationState(c).canMove) { moveNext(c); continue; }
+    const offer = c.offers.filter(o => !o.taken).sort((a, b) => b.tier - a.tier)[0];
+    if (!offer) break;
+    takeOffer(c, offer.id);
+    const o = c.order!;
+    startInspection(c, 0);
+    for (const id of o.noticed ?? []) {
+      if (openItem(c, id, 1)) closeCard(c, 1);
+    }
+    toDialogue(c);
+    const available = availableQuestions(o);
+    const itemQuestion = available.find(q => !q.id.startsWith('base_'));
+    const questionIds = [itemQuestion?.id, 'base_knowledge', 'base_urgency'].filter((id): id is string => !!id);
+    let knowledge: Level | undefined;
+    let budget: Level | undefined = offer.omen?.type === 'budget' ? offer.omen.level : undefined;
+    for (const id of questionIds) {
+      const answer = ask(c, id);
+      if (!answer) continue;
+      if (id === 'base_knowledge') {
+        const index = BASE_QUESTIONS.knowledge.a.findIndex(p => p.conv === answer || p.formal === answer);
+        if (index >= 0) knowledge = index as Level;
+      }
+      const def = ALL_ITEMS[id];
+      if (def?.kind === 'reliable' && def.category === 'budget') budget = def.level;
+      continueDialogue(c);
+    }
+    toPrice(c);
+    // Осторожнее при риске скандала или высокой осведомлённости; бюджет помогает выбрать цену.
+    const m = policy === 'clues' ? (offer.omen?.type === 'scandal' ? 1.1 : knowledge === 2 ? 1.2 : budget === 0 ? 1.1 : budget === 2 ? 1.35 : 1.25) : Number(policy.slice(5)) / 100;
+    const response = propose(c, m);
+    if (response.kind === 'soft' || response.kind === 'hard') propose(c, Math.min(0.9, response.m - 0.05));
+    if (o.stage === 'price') propose(c, Math.min(0.85, o.reactions[o.reactions.length - 1].m - 0.05));
+    if (o.stage === 'repair') {
+      attempted++;
+      for (;;) { beginAttempt(c); if (rand() < 0.12) failAttempt(c); else { succeedAttempt(c); break; } }
+    }
+    finishOrder(c);
+  }
+  return { status: c.status, ending: c.ending, loc: LOCATIONS[c.locIdx].id, skillPurchases, partPurchases, attempted };
+}
+
+describe('баланс: игрок без доступа к скрытым характеристикам', () => {
+  it('фиксирует исходы и инвестиции без требования заданного процента побед', () => {
+    const n = 3000;
+    const outcomes: Record<string, number> = {};
+    let skills = 0, parts = 0, repairs = 0, investors = 0;
+    for (let seed = 1; seed <= n; seed++) {
+      const r = playObserved(seed);
+      const key = r.status === 'victory' ? 'victory' : `${r.ending ?? r.status}@${r.loc}`;
+      outcomes[key] = (outcomes[key] ?? 0) + 1;
+      skills += r.skillPurchases; parts += r.partPurchases; repairs += r.attempted;
+      if (r.skillPurchases) investors++;
+    }
+    console.log('observed', { n, outcomes, investors, skillPurchases: skills, partPurchases: parts, repairs });
+    expect(Object.values(outcomes).reduce((a, b) => a + b, 0)).toBe(n);
+    expect(investors).toBeGreaterThan(0);
+    expect(Object.keys(outcomes).filter(key => key.startsWith('board@') || key.startsWith('mustMove@'))).toEqual([]);
+  });
+
+  it('сравнивает открытые стратегии с навыками и без них', () => {
+    const n = 3000;
+    for (const policy of ['clues', 'fixed120', 'fixed125', 'fixed130', 'fixed135'] as const) {
+      for (const invest of [false, true]) {
+        const outcomes: Record<string, number> = {};
+        let skills = 0;
+        for (let seed = 1; seed <= n; seed++) {
+          const r = playObserved(seed, policy, invest);
+          const key = r.status === 'victory' ? 'victory' : `${r.ending ?? r.status}@${r.loc}`;
+          outcomes[key] = (outcomes[key] ?? 0) + 1;
+          skills += r.skillPurchases;
+        }
+        console.log('policy', { policy, invest, outcomes, skills });
+        expect(Object.values(outcomes).reduce((a, b) => a + b, 0)).toBe(n);
+      }
+    }
+  });
+
 });

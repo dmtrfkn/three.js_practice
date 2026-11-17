@@ -1,9 +1,10 @@
 // Четыре миниигры ремонта на Canvas 2D (docs/«Миниигры ремонта и неисправности»).
 // Каждая игра сообщает о результате через колбэки; таймер и лимит ошибок ведёт хост.
 import { sfx } from '../audio/sfx';
+import { makeExtra, actExtra, EXTRA_TYPES, type ExtraType, type Tools } from './extra-model';
 
 export interface MiniCallbacks { onError: (msg: string) => void; onSuccess: () => void; onInfo?: (msg: string) => void }
-export interface MiniParams { label: string; deviceName: string; part?: { kind: string; value: number; unit: string; prefix?: string; suffix?: string }; parts: number; wires: number; hits: number; zone: number; period: number; screws: number; dirt: number; seed: number }
+export interface MiniParams { label: string; deviceName: string; part?: { kind: string; value: number; unit: string; prefix?: string; suffix?: string }; parts: number; wires: number; hits: number; zone: number; period: number; screws: number; dirt: number; seed: number; difficulty?: number; tools?: Tools }
 
 const TOUCH = typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches;
 const C = { paper: '#e9ebe6', paper2: '#d4d8d1', graphite: '#2a2d33', ink: '#1e3c8c', stamp: '#a3294a', ok: '#2f7d4f', sticker: '#f1d04b', board: '#2f5d4a', boardDark: '#244a3a', copper: '#c99a4a' };
@@ -68,9 +69,9 @@ abstract class Mini {
     ctx.fillStyle = '#2f343c'; rr(ctx, 0, 0, w, h, 18); ctx.fill();
     ctx.fillStyle = C.paper; rr(ctx, 16, 16, w - 32, h - 32, 22); ctx.fill();
     for (const [x, y] of [[36, 36], [w - 36, 36], [36, h - 36], [w - 36, h - 36]]) screwHead(ctx, x, y, 9);
-    ctx.fillStyle = C.graphite; ctx.font = '800 24px Nunito, sans-serif'; ctx.fillText(title, 60, 62);
+    ctx.fillStyle = C.graphite; ctx.font = '800 24px \"Pixelify Sans\", sans-serif'; ctx.fillText(title, 60, 62);
     // инструкция переносится на вторую строку, если не помещается
-    ctx.fillStyle = C.ink; ctx.font = '21px Neucha, cursive';
+    ctx.fillStyle = C.ink; ctx.font = '21px \"Pixelify Sans\", sans-serif';
     const maxW = w - 120, words = instr.split(' '); let line = '', y = 90; const lines: string[] = [];
     for (const wd of words) { const tst = line ? line + ' ' + wd : wd; if (ctx.measureText(tst).width > maxW && line) { lines.push(line); line = wd; } else line = tst; }
     lines.push(line);
@@ -126,9 +127,9 @@ export class SwapGame extends Mini {
     const s = this.slot;
     ctx.setLineDash([8, 6]); ctx.strokeStyle = C.sticker; ctx.lineWidth = 3; rr(ctx, s.x, s.y, s.w, s.h, 12); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle = 'rgba(0,0,0,.25)'; rr(ctx, s.x + 30, s.y + s.h / 2 - 24, 200, 48, 10); ctx.fill();
-    ctx.fillStyle = '#f2f2ee'; ctx.font = '700 16px "PT Mono", monospace'; ctx.fillText(`${this.p.part?.kind ?? 'деталь'}: ${this.need}`, s.x + 8, s.y + s.h + 24);
+    ctx.fillStyle = '#f2f2ee'; ctx.font = '700 16px "Pixelify Sans", sans-serif'; ctx.fillText(`${this.p.part?.kind ?? 'деталь'}: ${this.need}`, s.x + 8, s.y + s.h + 24);
     ctx.fillStyle = 'rgba(30,20,10,.6)'; ctx.beginPath(); ctx.ellipse(s.x + s.w - 40, s.y + 28, 26, 14, 0.3, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = C.graphite; ctx.font = '700 15px Nunito'; if (this.tall) ctx.fillText('лоток с деталями', this.w / 2 - 220, 418); else ctx.fillText('лоток с деталями', this.w - 250, 118);
+    ctx.fillStyle = C.graphite; ctx.font = '700 15px \"Pixelify Sans\"'; if (this.tall) ctx.fillText('лоток с деталями', this.w / 2 - 220, 418); else ctx.fillText('лоток с деталями', this.w - 250, 118);
     for (const pt of this.parts) this.drawPart(pt);
   }
   private drawPart(pt: Part) {
@@ -138,7 +139,7 @@ export class SwapGame extends Mini {
     ctx.fillStyle = pt === this.placed ? '#e6f2e9' : '#f4f1e6'; rr(ctx, pt.x, pt.y, 200, 48, 10); ctx.fill();
     ctx.restore();
     ctx.strokeStyle = '#9aa1aa'; ctx.lineWidth = 1.5; rr(ctx, pt.x, pt.y, 200, 48, 10); ctx.stroke();
-    ctx.fillStyle = C.graphite; ctx.font = '700 17px "PT Mono", monospace'; ctx.fillText(pt.label, pt.x + 14, pt.y + 30);
+    ctx.fillStyle = C.graphite; ctx.font = '700 17px "Pixelify Sans", sans-serif'; ctx.fillText(pt.label, pt.x + 14, pt.y + 30);
   }
 }
 
@@ -187,7 +188,7 @@ export class WiresGame extends Mini {
     for (const wi of this.wires) {
       const ya = this.ys[wi.a], yb = this.ys[wi.b];
       ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 11; ctx.beginPath(); ctx.moveTo(this.lx, ya + 3); ctx.bezierCurveTo(wi.ctrl[0], wi.ctrl[1] + 3, wi.ctrl[2], wi.ctrl[3] + 3, this.rx, yb + 3); ctx.stroke();
-      ctx.strokeStyle = wi.checked ? (wi.broken ? C.stamp : '#3f8f5f') : wi.shade; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(this.lx, ya); ctx.bezierCurveTo(wi.ctrl[0], wi.ctrl[1], wi.ctrl[2], wi.ctrl[3], this.rx, yb); ctx.stroke();
+      ctx.strokeStyle = wi.checked ? (wi.broken ? C.stamp : '#3f8f5f') : this.p.tools?.multimeter && wi.broken ? C.sticker : wi.shade; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(this.lx, ya); ctx.bezierCurveTo(wi.ctrl[0], wi.ctrl[1], wi.ctrl[2], wi.ctrl[3], this.rx, yb); ctx.stroke();
       ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(this.lx, ya - 2); ctx.bezierCurveTo(wi.ctrl[0], wi.ctrl[1] - 2, wi.ctrl[2], wi.ctrl[3] - 2, this.rx, yb - 2); ctx.stroke();
     }
     const hov = this.endAt();
@@ -202,10 +203,10 @@ export class WiresGame extends Mini {
     ctx.fillStyle = '#f1c232'; rr(ctx, mx, my, 150, this.h - 160, 20); ctx.fill();
     ctx.fillStyle = '#2a2d33'; rr(ctx, mx + 12, my + 12, 126, this.h - 184, 14); ctx.fill();
     ctx.fillStyle = '#9fb59a'; rr(ctx, mx + 22, my + 24, 106, 64, 8); ctx.fill();
-    ctx.fillStyle = this.meterOk ? '#123a1e' : this.meter === 'OL' ? '#5a0d1d' : '#1b2a18'; ctx.font = '700 38px "PT Mono", monospace'; ctx.textAlign = 'center'; ctx.fillText(this.meter, mx + 75, my + 70); ctx.textAlign = 'left';
+    ctx.fillStyle = this.meterOk ? '#123a1e' : this.meter === 'OL' ? '#5a0d1d' : '#1b2a18'; ctx.font = '700 38px "Pixelify Sans", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(this.meter, mx + 75, my + 70); ctx.textAlign = 'left';
     ctx.fillStyle = '#e6eaec'; ctx.beginPath(); ctx.arc(mx + 75, my + 150, 34, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = '#2a2d33'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(mx + 75, my + 150); ctx.lineTo(mx + 96, my + 128); ctx.stroke();
-    ctx.fillStyle = '#e6eaec'; ctx.font = '700 13px Nunito'; ctx.textAlign = 'center'; ctx.fillText('Ω  прозвонка', mx + 75, my + 205); ctx.textAlign = 'left';
+    ctx.fillStyle = '#e6eaec'; ctx.font = '700 13px \"Pixelify Sans\"'; ctx.textAlign = 'center'; ctx.fillText('Ω  прозвонка', mx + 75, my + 205); ctx.textAlign = 'left';
     if (this.first) { ctx.strokeStyle = '#d64d3b'; ctx.lineWidth = 3; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.moveTo(this.first.side ? this.rx : this.lx, this.ys[this.first.idx]); ctx.lineTo(this.mx, this.my); ctx.stroke(); ctx.setLineDash([]); }
   }
 }
@@ -304,8 +305,8 @@ export class CleanGame extends Mini {
       ctx.save(); ctx.globalAlpha = 1 - this.coverOff; ctx.translate(0, -this.coverOff * 60);
       ctx.fillStyle = '#c9ccd0'; rr(ctx, box.x - 6, box.y - 6, box.w + 12, box.h + 12, 18); ctx.fill();
       ctx.fillStyle = '#b9bcc2'; for (let i = 0; i < 9; i++) rr(ctx, box.x + box.w * 0.3, box.y + 60 + i * 22, box.w * 0.4, 8, 4), ctx.fill();
-      ctx.fillStyle = C.graphite; ctx.font = '800 22px Nunito'; ctx.fillText(this.p.deviceName.toUpperCase(), box.x + 30, box.y + box.h - 30);
-      for (const s of this.screws) { if (s.out) continue; screwHead(ctx, s.x, s.y, 14, 0.6); ctx.fillStyle = C.stamp; ctx.font = '800 16px Nunito'; ctx.fillText(String(s.n), s.x + 16, s.y - 12); }
+      ctx.fillStyle = C.graphite; ctx.font = '800 22px \"Pixelify Sans\"'; ctx.fillText(this.p.deviceName.toUpperCase(), box.x + 30, box.y + box.h - 30);
+      for (const s of this.screws) { if (s.out) continue; screwHead(ctx, s.x, s.y, 14, 0.6); ctx.fillStyle = C.stamp; ctx.font = '800 16px \"Pixelify Sans\"'; ctx.fillText(String(s.n), s.x + 16, s.y - 12); }
       ctx.restore();
     }
   }
@@ -350,7 +351,7 @@ export class DiagnoseGame extends Mini {
     }
     const mid = Math.floor((this.low + this.high) / 2);
     this.boxes().forEach((b, i) => {
-      ctx.fillStyle = C.ink; ctx.fillRect(b.x, b.y, b.w, b.h);
+      ctx.fillStyle = this.p.tools?.multimeter && (i === (this.faulty <= mid ? 0 : 1)) ? C.ok : C.ink; ctx.fillRect(b.x, b.y, b.w, b.h);
       ctx.fillStyle = '#fff'; ctx.font = '22px "Pixelify Sans", sans-serif'; ctx.textAlign = 'center';
       ctx.fillText(`Измерить ${i === 0 ? `${this.low + 1}–${mid + 1}` : `${mid + 2}–${this.high + 1}`}`, b.x + b.w / 2, b.y + 54);
     });
@@ -388,8 +389,104 @@ export class AssembleGame extends Mini {
   }
 }
 
-export type MiniType = 'swap' | 'wires' | 'calib' | 'clean' | 'diagnose' | 'assemble';
+/** Компактные этапы с общей пиксельной панелью и отдельными правилами для каждого задания. */
+export class ExtraGame extends Mini {
+  private model;
+  private lastCell = -1;
+  private outside = false;
+  constructor(cv: HTMLCanvasElement, p: MiniParams, cb: MiniCallbacks, type: ExtraType) {
+    super(cv, p, cb); this.model = makeExtra(type, p.seed, p.difficulty, p.tools);
+  }
+  private boxes() {
+    const n = this.model.labels.length, cols = 2, rows = Math.ceil(n / cols);
+    const gap = 12, margin = 62, top = this.h * .43, bottom = this.h * .84;
+    const w = (this.w - margin * 2 - (cols - 1) * gap) / cols, h = (bottom - top - (rows - 1) * gap) / rows;
+    return this.model.labels.map((_, i) => { const j=this.model.type==='pipes' ? [0,1,3,2][i] : i; if(this.model.type==='pipes'){const size=Math.min(w,h), left=(this.w-size*2-gap)/2;return {x:left+(j%2)*(size+gap),y:top+Math.floor(j/2)*(size+gap),w:size,h:size};} return {x:margin+(j%cols)*(w+gap),y:top+Math.floor(j/cols)*(h+gap),w,h}; });
+  }
+  private cell() { return this.boxes().findIndex(b=>this.mx>=b.x && this.mx<=b.x+b.w && this.my>=b.y && this.my<=b.y+b.h); }
+  private action(i: number) {
+    const m=this.model, result=actExtra(m,i);
+    if (result==='error') { sfx('spark'); this.spark(this.mx,this.my); this.cb.onError('Проверьте порядок или показания'); }
+    else if(result==='done') { sfx('beep'); this.cb.onInfo?.('Этап выполнен'); this.win(); }
+    else if(result==='ok') {
+      sfx('click');
+      if(m.type==='hidden') this.cb.onInfo?.(m.order.includes(i) ? `Найден винт: ${m.step} из ${m.order.length}` : 'Под заглушкой пусто');
+      else if(m.type==='symptoms' && i<3) this.cb.onInfo?.(i===m.answer?'Тест обнаружил неисправность этого блока':'Тест пройден: этот блок исправен');
+      else if(m.type==='belt') this.cb.onInfo?.(m.values[0]>3?'Ремень дребезжит: слишком слабый':'Ремень свистит: слишком тугой');
+      else this.cb.onInfo?.('Продолжайте');
+    }
+  }
+  protected press() { const i=this.cell(); this.lastCell=i; this.outside=false; if(i>=0)this.action(i); }
+  protected move() { if(this.down && this.model.type==='solder' && !this.done) {
+    const i=this.cell(); if(i>=0 && i!==this.lastCell){this.lastCell=i;this.outside=false;this.action(i);}
+    const margin=this.p.tools?.soldering ? 50 : 18, boxes=this.boxes();
+    const near=boxes.some(b=>this.mx>=b.x-margin && this.mx<=b.x+b.w+margin && this.my>=b.y-margin && this.my<=b.y+b.h+margin);
+    if(!near && !this.outside){this.outside=true;this.cb.onError('Паяльник ушёл с дорожки');sfx('spark');}
+  } }
+  protected release() { this.lastCell=-1; }
+  protected draw(now: number) {
+    const m=this.model, c=this.ctx; this.frame(m.title,m.instruction);
+    c.textAlign='left';c.fillStyle=C.graphite;c.font='21px "Pixelify Sans", sans-serif';
+    const detail=m.type==='service' && !this.p.tools?.manuals && now-this.t0>5000 ? 'Мануал закрыт. Вспомните комбинацию; при ошибке ввод начнётся заново.' : m.detail;
+    const words=detail.split(' '); let line='', y=this.h*.25;
+    for(const word of words) { const next=line ? line+' '+word : word; if(c.measureText(next).width>this.w-124 && line) {c.fillText(line,62,y); y+=25; line=word;} else line=next; } if(line)c.fillText(line,62,y);
+    if(m.type==='code') { const frame=Math.floor(now/300) % ((m.answer+1)*2+5), blink=frame < (m.answer+1)*2 && frame%2===0; c.fillStyle=blink?'#ffbf45':'#755642';c.fillRect(this.w-100,35,20,20); }
+    const boxes=this.boxes();
+    boxes.forEach((b,i)=>{
+      const selected=m.selected[i], found=m.type==='hidden' && selected && m.order.includes(i);
+      c.fillStyle=selected?(found?C.copper:C.ok):C.board; c.fillRect(b.x,b.y,b.w,b.h);
+      c.fillStyle='rgba(255,255,255,.22)'; c.fillRect(b.x,b.y,b.w,4); c.fillStyle='rgba(0,0,0,.25)';c.fillRect(b.x,b.y+b.h-5,b.w,5);
+      c.fillStyle='#fff'; c.textAlign='center';c.font='22px "Pixelify Sans", sans-serif';
+      if(m.type==='pipes') {
+        c.save();c.translate(b.x+b.w/2,b.y+b.h/2);c.rotate(m.values[i]*Math.PI/2);c.strokeStyle=C.sticker;c.lineWidth=10;c.beginPath();
+        if(i===0 || i===3){c.moveTo(0,-b.h*.5);c.lineTo(0,b.h*.5);}else{c.moveTo(0,-b.h*.5);c.lineTo(0,0);c.lineTo(b.w*.5,0);}c.stroke();c.restore();
+      } else {
+        let label=m.labels[i];
+        if(m.type==='colors') {
+          const bands=label.split(' · '), palette:Record<string,string>={'коричневый':'#78503b','чёрный':'#20242a','красный':'#db5446','жёлтый':'#f2c652','фиолетовый':'#a875bc','оранжевый':'#ed9a4f'};
+          const cx=b.x+b.w/2, cy=b.y+b.h*.32, unit=Math.min(22,b.w/12);
+          c.fillStyle='#c9d2c9';c.fillRect(cx-unit*4,cy-3,unit*8,6);c.fillStyle='#e4c394';c.fillRect(cx-unit*3,cy-12,unit*6,24);
+          bands.forEach((band,j)=>{c.fillStyle=palette[band]||'#fff';c.fillRect(cx-unit*2+j*unit*1.5,cy-12,unit*.5,24);});
+        }
+        if(m.type==='leak') {
+          const x=b.x+b.w/2, yy=b.y+b.h*.26;
+          c.fillStyle='#cad2ce'; c.fillRect(x-24,yy-8,48,16);
+          if(i===0){c.fillStyle='#dcb77c';c.fillRect(x+14,yy-13,13,26);}
+          if(i===1){c.fillStyle='#506970';c.beginPath();c.arc(x,yy,19,0,Math.PI*2);c.fill();}
+          if(i===2){c.fillStyle='#cad2ce';c.fillRect(x-23,yy-18,46,38);c.fillStyle='#506970';c.fillRect(x+4,yy-12,3,22);}
+          if(i===3){c.fillStyle='#506970';c.fillRect(x-18,yy-16,36,32);c.fillStyle='#cad2ce';c.fillRect(x-12,yy-10,24,20);}
+          if(i===m.answer){c.fillStyle='#73ceeb';c.fillRect(x+10,yy+14,7,10);c.fillRect(x+14,yy+25,4,8);}
+        }
+        if(m.type==='hidden' && selected)label=found?'Винт ✓':'Пусто';
+        if(m.type==='symptoms' && selected && i<3)label+=i===m.answer?' · неисправен':' · исправен';
+        if(m.type==='hidden' && !selected && this.p.tools?.flashlight && m.order.includes(i))label+=' •';
+        if(m.type==='paste')label+=`  ${m.values[i]}/3`;
+        c.fillStyle='#fff';
+        if(m.type==='colors') { const bands=label.split(' · '); c.font='21px "Pixelify Sans", sans-serif';c.fillText(bands.slice(0,2).join(' · '),b.x+b.w/2,b.y+b.h*.68,b.w-12);c.fillText(bands[2],b.x+b.w/2,b.y+b.h*.88,b.w-12); }
+        else if(m.type!=='solder') c.fillText(label,b.x+b.w/2,b.y+(m.type==='leak'?b.h*.82:b.h/2+6),b.w-12);
+      }
+    });
+    if(m.type==='solder') {
+      const points=boxes.map(b=>({x:b.x+b.w/2,y:b.y+b.h/2}));
+      c.strokeStyle='#a1b3a1';c.lineWidth=16;c.lineJoin='round';c.beginPath();points.forEach((p,i)=>i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));c.stroke();
+      c.strokeStyle=C.copper;c.lineWidth=8;c.beginPath();points.slice(0,Math.max(1,m.step)).forEach((p,i)=>i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));c.stroke();
+      points.forEach((p,i)=>{c.fillStyle=m.selected[i]?C.sticker:C.copper;c.fillRect(p.x-16,p.y-16,32,32);c.fillStyle=m.selected[i]?C.graphite:'#fff';c.font='20px "Pixelify Sans", sans-serif';c.textAlign='center';c.fillText(String(i+1),p.x,p.y+7);});
+    }
+    c.fillStyle=C.ink;c.font='19px "Pixelify Sans", sans-serif';c.textAlign='center';
+    let status='';
+    if(m.type==='double')status=`Левая: ${m.values[0]} / 3   ·   Правая: ${m.values[1]} / 3`;
+    if(m.type==='belt')status=`Прогиб: ${m.values[0]} мм · ${m.values[0]>3?'дребезг':m.values[0]<3?'свист':'ровный ход'}`;
+    if(m.type==='service')status=`Введено: ${m.step} / ${m.order.length}`;
+    if(m.type==='symptoms')status=`Тестов осталось: ${2-m.step}`;
+    if(m.type==='solder')status=`Пропаяно: ${m.step} / ${m.order.length}`;
+    if(m.type==='hidden')status=`Найдено винтов: ${m.step} / ${m.order.length}`;
+    c.fillText(status,this.w/2,this.h*.92,this.w-100);c.textAlign='left';
+  }
+}
+
+export type MiniType = 'swap' | 'wires' | 'calib' | 'clean' | 'diagnose' | 'assemble' | ExtraType;
 export function createMini(type: MiniType, cv: HTMLCanvasElement, p: MiniParams, cb: MiniCallbacks): Mini {
+  if ((EXTRA_TYPES as readonly string[]).includes(type)) return new ExtraGame(cv, p, cb, type as ExtraType);
   if (type === 'diagnose') return new DiagnoseGame(cv, p, cb);
   if (type === 'assemble') return new AssembleGame(cv, p, cb);
   if (type === 'swap') return new SwapGame(cv, p, cb);

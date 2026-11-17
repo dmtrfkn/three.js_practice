@@ -137,10 +137,12 @@ export interface Campaign {
   skills?: Record<'attention' | 'reading' | 'charisma' | 'mastery', number>;
   /** запас комплектов деталей по классам */
   parts?: Record<'used' | 'normal' | 'original', number>;
+  /** Разовые покупки: инструменты остаются у мастера между заказами. */
+  tools?: Partial<Record<'multimeter' | 'screwdrivers' | 'soldering' | 'flashlight' | 'manuals', boolean>>;
   /** всего потрачено на развитие */
   spent?: number;
   /** будущие гарантийные случаи после ремонта б/у деталями */
-  warranty?: { due: number; client: string; deviceId: string }[];
+  warranty?: { due: number; client: string; deviceId: string; locIdx?: number }[];
   /** сообщения для игрока, которые нужно показать на доске */
   news?: string[];
 }

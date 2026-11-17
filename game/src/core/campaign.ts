@@ -59,6 +59,7 @@ export function takeOffer(c: Campaign, offerId: string): Order {
   if (!offer) throw new Error('Нет такого предложения');
   if (c.callsUsed >= PARAMS.callsPerLocation) throw new Error('Вызовы закончились');
   offer.taken = true;
+  settleWarranty(c, false, c.callIndex + 1);
   const isInsp = chance(c.rng, inspectorChance(c.callIndex, c.rep, c.inspectorBonus));
   c.inspectorBonus = 0;
   const role = isInsp ? 'inspector' : 'regular';
@@ -81,20 +82,22 @@ export function takeOffer(c: Campaign, offerId: string): Order {
   // мастер замечает часть предметов в зависимости от внимательности; достоверный признак — не обязательно
   const n = noticedCount(c);
   order.noticed = n >= 4 ? order.items.map((i) => i.id) : shuffle(c.rng, order.items.map((i) => i.id)).slice(0, n);
-  // гарантийные случаи, срок которых подошёл
-  const due = (c.warranty ?? []).filter((w) => w.due <= c.callIndex);
-  if (due.length) {
-    c.warranty = (c.warranty ?? []).filter((w) => w.due > c.callIndex);
-    for (const w of due) {
-      c.rep = clampRep(c.rep - 3);
-      const cost = kitPrice(c.locIdx, 'normal');
-      c.money -= cost;
-      (c.news ??= []).push(`Гарантийный случай: ${w.client} позвонил — ${DEVICES[w.deviceId].nameAcc} снова сломалась после ремонта б/у деталью. Бесплатный выезд и новая деталь: −${cost} ₽, репутация −3.`);
-    }
-  }
   c.order = order;
   c.status = 'order';
   return order;
+}
+
+/** При окончании кампании рассчитываем и будущие обязательства, иначе последний б/у ремонт не несёт риска. */
+function settleWarranty(c: Campaign, all = false, callIndex = c.callIndex): void {
+  const due = (c.warranty ?? []).filter(w => all || w.due <= callIndex);
+  c.warranty = (c.warranty ?? []).filter(w => !due.includes(w));
+  for (const w of due) {
+    const cost = kitPrice(w.locIdx ?? c.locIdx, 'normal');
+    c.rep = clampRep(c.rep - 3);
+    c.money -= cost;
+    c.spent = (c.spent ?? 0) + cost;
+    (c.news ??= []).push(`Гарантийный случай: ${w.client} позвонил — ${DEVICES[w.deviceId].nameAcc} снова сломалась после ремонта б/у деталью. Бесплатный выезд и новая деталь: −${cost} ₽, репутация −3.`);
+  }
 }
 
 function buildRoom(c: Campaign, o: Order): void {
@@ -302,7 +305,7 @@ export function failAttempt(c: Campaign): void {
   o.failures++;
 }
 
-export function succeedAttempt(c: Campaign, errors = 0): void {
+export function succeedAttempt(c: Campaign, errors = 0, fast = false): void {
   const o = c.order!;
   if (o.stage !== 'repair' || !o.attemptActive) return;
   o.attemptActive = false;
@@ -313,9 +316,9 @@ export function succeedAttempt(c: Campaign, errors = 0): void {
   o.repDelta = repForOutcome({ outcome: 'paid', objected: o.objected, failures: o.failures, agreedM: o.agreedM });
   // качество ремонта: класс детали, чистота работы, мастерство
   const cls = o.partClass ?? 'normal';
-  o.quality = repairQuality(cls, o.failures, errors, o.sk?.mastery ?? 0);
+  o.quality = repairQuality(cls, o.failures, errors, o.sk?.mastery ?? 0, fast);
   if (cls === 'original' || o.quality >= 5) { o.tip = Math.round(o.payment * (o.quality >= 5 && cls === 'original' ? 0.15 : 0.1)); o.payment += o.tip; o.repDelta += 1; }
-  if (cls === 'used' && chance(c.rng, 0.25)) (c.warranty ??= []).push({ due: c.callIndex + 1 + Math.floor(next(c.rng) * 2), client: o.client.name, deviceId: o.deviceId });
+  if (cls === 'used' && chance(c.rng, 0.25)) (c.warranty ??= []).push({ due: c.callIndex + 1 + Math.floor(next(c.rng) * 2), client: o.client.name, deviceId: o.deviceId, locIdx: o.locIdx });
   if (o.role === 'inspector' && isViolation(o.agreedM!)) {
     o.violation = true;
     o.fine = fineFor(o.P, o.agreedPrice!);
@@ -327,6 +330,12 @@ export function succeedAttempt(c: Campaign, errors = 0): void {
 
 /** Загрузка во время попытки ремонта: попытка засчитывается проваленной. */
 export function onLoad(c: Campaign): void {
+  c.skills = { ...defaultSkills(), ...c.skills };
+  c.parts = { ...defaultParts(), ...c.parts };
+  c.tools ??= {};
+  c.warranty ??= [];
+  c.news ??= [];
+  c.spent ??= 0;
   const o = c.order;
   if (o && o.stage === 'repair' && o.attemptActive) failAttempt(c);
 }
@@ -377,10 +386,12 @@ export function finishOrder(c: Campaign): void {
   const s = locationState(c);
   if (s.callsLeft <= 0) {
     if (s.isOffice) {
-      if (s.canWin) { c.status = 'victory'; c.ending = 'win'; }
-      else { c.status = 'gameover'; c.ending = c.money >= s.quota ? 'rep' : 'money'; }
+      settleWarranty(c, true);
+      const final = locationState(c);
+      if (final.canWin) { c.status = 'victory'; c.ending = 'win'; }
+      else { c.status = 'gameover'; c.ending = c.money >= final.quota ? 'rep' : 'money'; }
     } else if (s.canMove) c.status = 'mustMove';
-    else { c.status = 'gameover'; c.ending = 'money'; }
+    else { settleWarranty(c, true); c.status = 'gameover'; c.ending = 'money'; }
   }
 }
 
@@ -398,5 +409,8 @@ export function moveNext(c: Campaign): void {
 
 export function openWorkshop(c: Campaign): void {
   if (c.order) return;
-  if (locationState(c).canWin) { c.status = 'victory'; c.ending = 'win'; }
+  if (locationState(c).canWin) {
+    settleWarranty(c, true);
+    if (locationState(c).canWin) { c.status = 'victory'; c.ending = 'win'; }
+  }
 }

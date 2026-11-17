@@ -19,7 +19,7 @@ await p.waitForFunction(() => window.__game.game.value?.order?.stage === 'inspec
 await shot('inspect_' + (await title())); await nextBtn();
 await shot('inspect_' + (await title())); await nextBtn();
 await shot('inspect_' + (await title()), 900);
-const rid = await p.evaluate(() => window.__game.game.value.order.items.find((i) => i.kind === 'reliable').id);
+const rid = await p.evaluate(() => { const o = window.__game.game.value.order; return (o.items.find((i) => i.kind === 'reliable' && o.noticed.includes(i.id)) ?? o.items.find((i) => o.noticed.includes(i.id))).id; });
 const pos = await p.evaluate((i) => window.__scene.screenPos(i), rid);
 await p.mouse.move(pos.x, pos.y); await p.waitForTimeout(150); await p.mouse.down(); await p.mouse.up(); await p.waitForTimeout(500);
 await shot('inspect_' + (await title()));

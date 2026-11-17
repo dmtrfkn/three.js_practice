@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { BRANCHES, PARTS, level, nextCost, kitPrice } from '../../core/progress';
+import { BRANCHES, PARTS, TOOLS, level, nextCost, kitPrice } from '../../core/progress';
 import { game, ui, act, toMenu } from '../../game/store';
 import { LOCATIONS, PARAMS } from '../../core/params';
 import { DEVICES, URGENCY_HINT, OMENS } from '../../core/content';
@@ -81,7 +81,7 @@ function choose(id: string) { if (st.value.callsLeft <= 0) return; sfx('pin'); s
           <div v-if="last" class="last hand">прошлый заказ: {{ DEVICES[last.deviceId].name.toLowerCase() }}, {{ last.client }} — {{ last.outcome === 'paid' ? 'оплачено ' + rub(last.payment) : last.outcome === 'left' ? 'клиент ушёл' : 'жалоба' }}{{ last.violation ? ', штраф ' + rub(last.fine) : '' }}</div>
           <div v-else class="last hand">выберите заявку — цена станет известна после диагностики</div>
           <div class="row">
-            <button class="btn ghost" type="button" @click="workshopOpen = true"><span v-html="ICON.wrench" />Навыки и детали</button>
+            <button class="btn ghost" type="button" @click="workshopOpen = true"><span v-html="ICON.wrench" />Мастерская</button>
             <button v-if="st.canMove" class="btn yellow" type="button" @click="ui.confirmMove = true"><span v-html="ICON.truck" />Переехать за {{ rub(loc.moveCost) }}</button>
             <button v-if="st.canWin" class="btn ok" type="button" @click="act.workshop()"><span v-html="ICON.wrench" />Открыть мастерскую</button>
           </div>
@@ -91,7 +91,7 @@ function choose(id: string) { if (st.value.callsLeft <= 0) return; sfx('pin'); s
     </div>
 
     <div v-if="workshopOpen" class="modal-bg" @click.self="workshopOpen = false">
-      <div class="paper modal shop" role="dialog" aria-modal="true" aria-label="Навыки и детали">
+      <div class="paper modal shop" role="dialog" aria-modal="true" aria-label="Навыки, инструменты и детали">
         <div class="spread"><h3>Мастерская на колёсах</h3><button class="btn ghost" type="button" @click="workshopOpen = false">Закрыть</button></div>
         <p>Баланс: <b>{{ rub(c.money) }}</b>. Вложения помогают в работе, но оставьте деньги на переезд.</p>
         <h4>Навыки</h4>
@@ -103,6 +103,11 @@ function choose(id: string) { if (st.value.callsLeft <= 0) return; sfx('pin'); s
         <div v-for="part in PARTS" :key="part.id" class="shop-row">
           <div><b>{{ part.name }} · в запасе {{ c.parts?.[part.id] ?? 0 }}</b><div>{{ part.about }}</div></div>
           <button class="btn" type="button" :disabled="c.money < kitPrice(c.locIdx, part.id)" @click="act.buyParts(part.id)">Купить {{ rub(kitPrice(c.locIdx, part.id)) }}</button>
+        </div>
+        <h4>Инструменты · остаются навсегда</h4>
+        <div v-for="tool in TOOLS" :key="tool.id" class="shop-row">
+          <div><b>{{ tool.name }}</b><div>{{ tool.about }}</div></div>
+          <button class="btn" type="button" :disabled="!!c.tools?.[tool.id] || c.money < tool.cost" @click="act.buyTool(tool.id)">{{ c.tools?.[tool.id] ? 'Куплено' : 'Купить ' + rub(tool.cost) }}</button>
         </div>
       </div>
     </div>

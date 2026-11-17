@@ -58,7 +58,7 @@ function focusItem(id: string) { props.scene?.lookAtItem(id); props.scene?.highl
     <div class="hint-line">{{ hint }}</div>
     <div class="actions">
       <span class="sr-list" aria-label="Предметы в комнате">
-        <button v-for="(it, i) in o.items" :key="it.id" type="button" class="sr-item" @focus="focusItem(it.id)" @blur="scene?.highlight(null)" @click="act.openItem(it.id)">
+        <button v-for="(it, i) in o.items.filter(item => !o.noticed || o.noticed.includes(item.id))" :key="it.id" type="button" class="sr-item" @focus="focusItem(it.id)" @blur="scene?.highlight(null)" @click="act.openItem(it.id)">
           предмет {{ i + 1 }}<span v-if="o.inspected.includes(it.id)">: {{ label(it.id) }}</span>
         </button>
       </span>
