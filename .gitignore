@@ -1,6 +1,8 @@
 node_modules/
 dist/
 game/release/
+.agents/
+.codex/
 *.log
 .DS_Store
 ~$*
